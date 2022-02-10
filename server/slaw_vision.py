@@ -112,6 +112,9 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
 
 
+def resize(src):
+    height, width = src.shape[:2]
+    return cv2.resize(src, (width/2, height/2),interpolation=cv2.INTER_AREA)
 
 
 
@@ -120,13 +123,13 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 method = cv2.TM_SQDIFF_NORMED
 
 # Read the images from the file
-turret = cv2.imread('training_data/img/patterns/units/turret.png')
-minion = cv2.imread('training_data/img/patterns/units/minion.png')
-champion_1 = cv2.imread('training_data/img/patterns/units/champion.png')
-champion_2 = cv2.imread('training_data/img/patterns/units/champion_2.png')
-building_1 = cv2.imread('training_data/img/patterns/units/building_1.png')
-building_2 = cv2.imread('training_data/img/patterns/units/building_2.png')
-building_3 = cv2.imread('training_data/img/patterns/units/building_3.jpg')
+turret = resize(cv2.imread('training_data/img/patterns/units/turret.png'))
+minion = resize(cv2.imread('training_data/img/patterns/units/minion.png'))
+champion_1 = resize(cv2.imread('training_data/img/patterns/units/champion.png'))
+champion_2 = resize(cv2.imread('training_data/img/patterns/units/champion_2.png'))
+building_1 = resize(cv2.imread('training_data/img/patterns/units/building_1.png'))
+building_2 = resize(cv2.imread('training_data/img/patterns/units/building_2.png'))
+building_3 = resize(cv2.imread('training_data/img/patterns/units/building_3.jpg'))
 
 
 
