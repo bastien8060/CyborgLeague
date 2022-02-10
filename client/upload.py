@@ -22,8 +22,9 @@ start = time.time()
 path_img = 'output.jpg'
 url = "http://163.172.97.55:44444"
 
-img = resize(path_img)
+img = open(path_img,"rb")
 # Requests makes it simple to upload Multipart-encoded files 
 files = {'media': img}
 requests.post(url, files=files)
+img.close()
 print("Process time:", (time.time() - start))
