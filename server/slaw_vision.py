@@ -53,6 +53,7 @@ def searchall(image):
     image = search(image,champion_1,0.80,[(255,0,255),4])
     image = search(image,champion_2,0.85,[(255,0,0),4])
 
+    cv2.imwrite('output.png',image)
 
     print("Process time:", (time.time() - start))
 
@@ -86,8 +87,8 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             form = cgi.FieldStorage( fp=self.rfile, headers=self.headers, environ={'REQUEST_METHOD':'POST', 'CONTENT_TYPE':self.headers['Content-Type'], })
             print (type(form))
             try:
-                if isinstance(form["file"], list):
-                    for record in form["file"]:
+                if isinstance(form["media"], list):
+                    for record in form["media"]:
                         buf =  record.file.read()
                         #use numpy to construct an array from the bytes
                         x = np.fromstring(buf, dtype='uint8')
@@ -95,7 +96,7 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                         img = cv2.imdecode(x, cv2.IMREAD_UNCHANGED)
                         searchall(img)
                 else:
-                    buf = form["file"].file.read()
+                    buf = form["media"].file.read()
                     #use numpy to construct an array from the bytes
                     x = np.fromstring(buf, dtype='uint8')
                     #decode the array into an image
@@ -138,6 +139,5 @@ with socketserver.TCPServer(("", PORT), Handler) as httpd:
     print("serving at port", PORT)
     httpd.serve_forever()
 
-#cv2.imwrite('output.jpg',image)
 
 
