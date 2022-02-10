@@ -10,7 +10,7 @@ def resize(filename):
 
     print(img1.size)
 
-    im1_resize = img1.resize((img1.size[0]//2, img1.size[1]//2), Image.ANTIALIAS)
+    im1_resize = img1.resize((960, 540), Image.ANTIALIAS)
 
     with io.BytesIO() as output:
         im1_resize.save(output, 'png')
