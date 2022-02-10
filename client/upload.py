@@ -4,16 +4,16 @@ import time
 
 from PIL import Image
 import io
+import cv2
 
 def resize(filename):
-    img1 = Image.open(filename)
-
-    print(img1.size)
-
-    im1_resize = img1.resize((960, 540), Image.ANTIALIAS)
+    src = cv2.imread(filename)
+    
+    height, width = src.shape[:2]
+    src = cv2.resize(src, (0,0), fx=0.5, fy=0.5) 
 
     with io.BytesIO() as output:
-        im1_resize.save(output, 'png')
+        cv2.imwrite("output.png", src)
         return output.getvalue()
 
 
