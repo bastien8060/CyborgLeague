@@ -141,6 +141,7 @@ PORT = 44444
 Handler = CustomHTTPRequestHandler
 with socketserver.TCPServer(("", PORT), Handler) as httpd:
     print("serving at port", PORT)
+    httpd.allow_reuse_address = True
     httpd.serve_forever()
 
 
