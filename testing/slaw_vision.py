@@ -1,20 +1,14 @@
 # pylint: skip-file
-import cv2, time, sys
+import sys
+import time
+import cv2
+import numpy as np
+import win32con
 import win32gui
 import win32ui
-import win32con
-from win32gui import GetWindowText, GetForegroundWindow
-from win32api import GetSystemMetrics
-import numpy as np
 from mss import mss
-import time
-
-while (GetWindowText(GetForegroundWindow()) == "League of Legends (TM) Client"):
-    time.sleep(0.35)
-    print(".",end="")
-    sys.stdout.flush()
-    if (GetWindowText(GetForegroundWindow()) == "League of Legends (TM) Client"):
-        time.sleep(4)
+from win32api import GetSystemMetrics
+from win32gui import GetForegroundWindow, GetWindowText
 
 sct = mss()
 monitor_1 = sct.monitors[0]

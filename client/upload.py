@@ -17,10 +17,10 @@ def resize(filename):
 
 start = time.time()
 path_img = 'output.jpg'
-url = "http://163.172.97.55:44444"
+url = "http://127.0.0.1:44444"
 
-img = resize(path_img)
+img = open(path_img,"rb")
 # Requests makes it simple to upload Multipart-encoded files 
-files = {'media': img}
-requests.post(url, files=files)
+requests.post(url, files={'media': img})
+img.close()
 print("Process time:", (time.time() - start))
