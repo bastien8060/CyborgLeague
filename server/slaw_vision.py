@@ -114,7 +114,7 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
 def resize(src):
     height, width = src.shape[:2]
-    return cv2.resize(src, (width/2, height/2),interpolation=cv2.INTER_AREA)
+    return cv2.resize(src, (0,0), fx=0.5, fy=0.5) 
 
 
 
