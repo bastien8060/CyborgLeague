@@ -58,7 +58,9 @@ def searchall(image):
     #image,turret_points = search(image,turret,0.91,[(0,0,255),4])
     image,minion_points = search(image,minion,0.95,[(0,255,0),4])
     #image = search(image,champion_1,0.80,[(255,0,255),4])
-    image,champion_points = search(image,champion_1,0.85,[(255,0,0),4])
+    image,champion_points = search(image,champion_1,0.88,[(255,0,0),4])
+
+    #cv2.imwrite('output.png',image)
 
     all_points = {
         "buildings_points": buildings_points,

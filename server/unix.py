@@ -52,7 +52,7 @@ def searchall(image):
 
     building_process = Process(target=search, args=(image,building_2,0.91,[(0,0,255),4],"buildings_points", queue))
     minion_process = Process(target=search, args=(image,minion,0.95,[(0,255,0),4], "minion_points", queue))
-    champion_process = Process(target=search, args=(image,champion_1,0.80,[(255,0,255),4], "champion_points", queue))
+    champion_process = Process(target=search, args=(image,champion_1,0.88,[(255,0,255),4], "champion_points", queue))
 
     minion_process.start()
     building_process.start()
