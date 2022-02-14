@@ -1,16 +1,19 @@
 # pylint: skip-file
 #!/usr/env python3
-import http.server
-import socketserver
-import io
 import cgi
-import cv2, time, sys
-import numpy as np
+import http.server
+import io
+import json
+import socketserver
+import sys
 import time
 
+import cv2
+import numpy as np
 
 
 def search(__image,__template,__threshold,__style):
+    points = []
     h, w = __template.shape[:2]
 
     method = cv2.TM_CCOEFF_NORMED
@@ -38,7 +41,11 @@ def search(__image,__template,__threshold,__style):
 
             res[start_row: end_row, start_col: end_col] = 0
             __image = cv2.rectangle(__image,(max_loc[0]+25,max_loc[1]+50), (max_loc[0]+w+1+25, max_loc[1]+h+1+50), __style[0], __style[1] )
-    return __image
+            averageXPoint = (max_loc[0]+max_loc[0]+w+51)/2
+            averageYPoint = (max_loc[1]+max_loc[1]+h+101)/2
+            averagePoint = (averageXPoint,averageYPoint)
+            points.append(averagePoint)
+    return __image,points
 
 
 
@@ -47,15 +54,21 @@ def searchall(image):
 
     #image = search(image,building_1,0.91,[(0,0,255),4])
     #image = search(image,building_2,0.91,[(0,0,255),4])
-    image = search(image,building_3,0.91,[(0,0,255),4])
-    image = search(image,turret,0.91,[(0,0,255),4])
-    image = search(image,minion,0.95,[(0,255,0),4])
+    image,buildings_points = search(image,building_2,0.91,[(0,0,255),4])
+    #image,turret_points = search(image,turret,0.91,[(0,0,255),4])
+    image,minion_points = search(image,minion,0.95,[(0,255,0),4])
     #image = search(image,champion_1,0.80,[(255,0,255),4])
-    image = search(image,champion_2,0.85,[(255,0,0),4])
+    image,champion_points = search(image,champion_1,0.85,[(255,0,0),4])
 
-    cv2.imwrite('output.png',image)
+    all_points = {
+        "buildings_points": buildings_points,
+        #"turret_points": turret_points,
+        "minion_points": minion_points,
+        "champion_points": champion_points
+    }
 
     print("Process time:", (time.time() - start))
+    return all_points
 
 
 
@@ -63,10 +76,10 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
     def do_POST(self):        
         r, info = self.deal_post_data()
-        print(r, info, "by: ", self.client_address)
+        #print(r, info, "by: ", self.client_address)
         f = io.BytesIO()
         if r:
-            f.write(b"Success\n")
+            f.write(str.encode(info))
         else:
             f.write(b"Failed\n")
         length = f.tell()
@@ -94,18 +107,18 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                         x = np.fromstring(buf, dtype='uint8')
                         #decode the array into an image
                         img = cv2.imdecode(x, cv2.IMREAD_UNCHANGED)
-                        searchall(img)
+                        points = searchall(img)
                 else:
                     buf = form["media"].file.read()
                     #use numpy to construct an array from the bytes
                     x = np.fromstring(buf, dtype='uint8')
                     #decode the array into an image
                     img = cv2.imdecode(x, cv2.IMREAD_UNCHANGED)
-                    searchall(img)
+                    points = searchall(img)
                     
             except IOError:
                     return (False, "Can't create file to write, do you have permission to write?")
-        return (True, "Files uploaded")
+        return (True, json.dumps(points))
 
 
 
@@ -139,10 +152,14 @@ building_3 = resize(cv2.imread('training_data/img/patterns/units/building_3.jpg'
 PORT = 44444
 
 Handler = CustomHTTPRequestHandler
+socketserver.TCPServer.allow_reuse_address = True
 with socketserver.TCPServer(("", PORT), Handler) as httpd:
     print("serving at port", PORT)
     httpd.allow_reuse_address = True
-    httpd.serve_forever()
+    try:
+        httpd.serve_forever()
+    except:
+        httpd.shutdown()
 
 
 

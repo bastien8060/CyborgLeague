@@ -1,4 +1,7 @@
-import client.CyborgLeague.VisionApi as VisionApi
+import time
+from .VisionApi import VisionApi
+
+Vision = VisionApi.Instance()
 
 class CyborgLeagueBot:
     def __init__(self):
@@ -7,8 +10,11 @@ class CyborgLeagueBot:
 async def start():
     bot.running = True
     while bot.running:
-        img = VisionApi.screenshot()
-        VisionApi.upload(img)
+        if Vision.isReady():
+            img = Vision.screenshot()
+            Vision.upload(img)
+        else:
+            time.sleep(0.01)
 
 bot = CyborgLeagueBot()
 
