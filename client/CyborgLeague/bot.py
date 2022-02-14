@@ -1,23 +1,40 @@
+import os
 import time
+
+from .GameActions import GameActions as Actions
 from .VisionApi import VisionApi
 
-Vision = VisionApi.Instance()
 
 class CyborgLeagueBot:
+
     def __init__(self):
+        self.Vision = VisionApi.Instance()
+        self.Actions = Actions.Instance()
         self.running = False
+        self.screen_elements = {}
+    
+    def Queue(self):
+        os.system("clear")
+        self.analyse_display()
+        self.Actions.attackAllMinions(bot.screen_elements)
+
+    def analyse_display(self):
+            img = self.Vision.screenshot()
+            duration, result = self.Vision.upload(img)
+            self.screen_elements = result
+            self.Vision.runhook(result)
+        
 
 async def start():
     bot.running = True
     while bot.running:
-        if Vision.isReady():
-            if Vision.cooldown:
+        if bot.Vision.isReady():
+            if bot.Vision.cooldown:
                 time.sleep(0.5)
-                Vision.cooldown = False
-            img = Vision.screenshot()
-            Vision.upload(img)
+                bot.Vision.cooldown = False
+            bot.Queue()
         else:
-            Vision.cooldown = True
+            bot.Vision.cooldown = True
             time.sleep(0.01)
 
 bot = CyborgLeagueBot()

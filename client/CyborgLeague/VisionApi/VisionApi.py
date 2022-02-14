@@ -16,7 +16,7 @@ from win32gui import GetForegroundWindow, GetWindowText
 
 
 class Instance:
-    def upload(self,img) -> bool:    
+    def upload(self,img):    
         start_upload = time.time()
 
         is_success, buffer = cv2.imencode(".jpg", img)
@@ -24,20 +24,7 @@ class Instance:
 
         request = requests.post(self.backend_url, files={'media': img})
         
-        result = json.loads(request.content)
-
-        champions = result["champion_points"]
-        minions = result["minion_points"]
-        buildings = result["buildings_points"]
-
-        os.system("clear")
-
-        print(f"Champions: {len(champions)}")
-        print(f"Minions: {len(minions)}")
-        print(f"Buildings: {len(buildings)}")
-
-        print("Upload time:", (time.time() - start_upload))
-        return True
+        return (time.time() - start_upload),json.loads(request.content)
 
     def isReady(self) -> bool:
         return GetWindowText(GetForegroundWindow()) == "League of Legends (TM) Client"
@@ -49,6 +36,16 @@ class Instance:
         sct_original = np.asarray(self.__sct.grab(self.__monitor_1))
         sct_img = cv2.cvtColor(sct_original, cv2.COLOR_BGRA2BGR)
         return sct_img
+
+    def runhook(self,result):
+        champions = result["champion_points"]
+        minions = result["minion_points"]
+        buildings = result["buildings_points"]
+
+        print(f"Champions: {len(champions)}")
+        print(f"Minions: {len(minions)}")
+        print(f"Buildings: {len(buildings)}")
+
 
     def __init__(self, url="http://127.0.0.1:44444"):
         self.cooldown = True
