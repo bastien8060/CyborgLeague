@@ -51,6 +51,7 @@ class Instance:
         return sct_img
 
     def __init__(self, url="http://127.0.0.1:44444"):
+        self.cooldown = True
         self.backend_url = url
         self.__sct = mss()
         self.__monitor_1 = self.__sct.monitors[0]
