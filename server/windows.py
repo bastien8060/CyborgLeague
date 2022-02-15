@@ -11,8 +11,22 @@ import time
 import cv2
 import numpy as np
 
+def CoordinateCorrector(xy,name):
+    """Corrects the coordinates from the health bar to the actual location to click the element.\n
+    Eg. Corrects the coordinates from a minion's healthbar to the actual position of the minion."""
+    xy[0] += {
+        'minion_points': 5,
+        'champion_points': 20,
+        'buildings_points': 20,
+    }[name]
+    xy[1] += {
+        'minion_points': 10,
+        'champion_points': 80,
+        'buildings_points': 0,
+    }[name]
+    return xy
 
-def search(__image,__template,__threshold,__style):
+def search(name,__image,__template,__threshold,__style):
     points = []
     h, w = __template.shape[:2]
 
@@ -42,8 +56,8 @@ def search(__image,__template,__threshold,__style):
             res[start_row: end_row, start_col: end_col] = 0
             __image = cv2.rectangle(__image,(max_loc[0]+25,max_loc[1]+50), (max_loc[0]+w+1+25, max_loc[1]+h+1+50), __style[0], __style[1] )
             averageXPoint = (max_loc[0]+max_loc[0]+w+51)/2
-            averageYPoint = (max_loc[1]+max_loc[1]+h+151)/2
-            averagePoint = (averageXPoint,averageYPoint)
+            averageYPoint = (max_loc[1]+max_loc[1]+h+101)/2
+            averagePoint = CoordinateCorrector([averageXPoint,averageYPoint],name)
             points.append(averagePoint)
     return __image,points
 
@@ -54,12 +68,15 @@ def searchall(image):
 
     #image = search(image,building_1,0.91,[(0,0,255),4])
     #image = search(image,building_2,0.91,[(0,0,255),4])
-    image,buildings_points = search(image,building_2,0.91,[(0,0,255),4])
+    image,buildings_points = search("buildings_points",image,building_2,0.91,[(0,0,255),4])
     #image,turret_points = search(image,turret,0.91,[(0,0,255),4])
-    image,minion_points = search(image,minion,0.95,[(0,255,0),4])
+    image,minion_points = search("minion_points",image,minion,0.95,[(0,255,0),4])
     #image = search(image,champion_1,0.80,[(255,0,255),4])
-    image,champion_points = search(image,champion_1,0.88,[(255,0,0),4])
+    image,champion_points = search("champion_points", image,champion_1,0.88,[(255,0,0),4])
 
+    image,buildings2_points = search("champion_points", image,champion_1,0.88,[(255,0,0),4])
+
+    buildings_points.extend(buildings2_points)
     #cv2.imwrite('output.png',image)
 
     all_points = {
@@ -69,7 +86,7 @@ def searchall(image):
         "champion_points": champion_points
     }
 
-    print("Process time:", (time.time() - start))
+    print(f"Process time: {(time.time() - start)}"+"\n")
     return all_points
 
 
@@ -100,7 +117,6 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         pdict['CONTENT-LENGTH'] = int(self.headers['Content-Length'])
         if ctype == 'multipart/form-data':
             form = cgi.FieldStorage( fp=self.rfile, headers=self.headers, environ={'REQUEST_METHOD':'POST', 'CONTENT_TYPE':self.headers['Content-Type'], })
-            print (type(form))
             try:
                 if isinstance(form["media"], list):
                     for record in form["media"]:

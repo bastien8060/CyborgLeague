@@ -7,12 +7,15 @@ import time
 import cv2
 import numpy as np
 import requests
-import win32con
-import win32gui
-import win32ui
-from mss import mss
-from win32api import GetSystemMetrics
-from win32gui import GetForegroundWindow, GetWindowText
+if os.name == 'nt':
+    import win32con
+    import win32gui
+    import win32ui
+    from mss import mss
+    from win32api import GetSystemMetrics
+    from win32gui import GetForegroundWindow, GetWindowText
+else:
+    raise Exception("Client only supports Windows")
 
 
 class Instance:

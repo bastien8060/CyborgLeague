@@ -6,6 +6,22 @@ import numpy as np
 import time
 
 
+def CoordinateCorrector(xy,name):
+    """Corrects the coordinates from the health bar to the actual location to click the element.\n
+    Eg. Corrects the coordinates from a minion's healthbar to the actual position of the minion."""
+    xy[0] += {
+        'minion_points': 5,
+        'champion_points': 20,
+        'buildings_points': 20,
+    }[name]
+    xy[1] += {
+        'minion_points': 10,
+        'champion_points': 80,
+        'buildings_points': 200,
+
+    }[name]
+    return xy
+
 def search(__image,__template,__threshold,__style,name,queue):
     print(f"starting {name}")
     points = []
@@ -37,8 +53,8 @@ def search(__image,__template,__threshold,__style,name,queue):
             res[start_row: end_row, start_col: end_col] = 0
             #__image = cv2.rectangle(__image,(max_loc[0]+25,max_loc[1]+50), (max_loc[0]+w+1+25, max_loc[1]+h+1+50), __style[0], __style[1] )
             averageXPoint = (max_loc[0]+max_loc[0]+w+51)/2
-            averageYPoint = (max_loc[1]+max_loc[1]+h+151)/2
-            averagePoint = (averageXPoint,averageYPoint)
+            averageYPoint = (max_loc[1]+max_loc[1]+h+101)/2
+            averagePoint = CoordinateCorrector([averageXPoint,averageYPoint],name)
             points.append(averagePoint)
     queue.put({"name":name,"points":points})
     return #__image,points
@@ -46,30 +62,44 @@ def search(__image,__template,__threshold,__style,name,queue):
 
 
 def searchall(image):
+    """
+    Simple multi-thread implementation with CV2 to search simulataneously for multiple templates. \n
+    Uses python's multiprocessing. Only recommended on Linux, as windows lack of support in forking processes, makes this feature a bottleneck.\n
+    Support on MacOS varies and may surprise some, as it is known to be buggy (Try with caution/not for the fainthearted).
+    """
     start = time.time()
 
     queue = SimpleQueue()
 
-    building_process = Process(target=search, args=(image,building_2,0.91,[(0,0,255),4],"buildings_points", queue))
+    turret_process = Process(target=search, args=(image,building_1,0.91,[(0,0,255),4],"buildings_points", queue))
+    building2_process = Process(target=search, args=(image,building_2,0.91,[(0,0,255),4],"buildings_points", queue))
     minion_process = Process(target=search, args=(image,minion,0.95,[(0,255,0),4], "minion_points", queue))
     champion_process = Process(target=search, args=(image,champion_1,0.88,[(255,0,255),4], "champion_points", queue))
 
     minion_process.start()
-    building_process.start()
+    turret_process.start()
+    building2_process.start()
     champion_process.start()
 
-    building_process.join()
+    turret_process.join()
+    building2_process.join()
     minion_process.join()
     champion_process.join()
 
     all_points = {}
     
-    for _ in range(3):
+    # Merges together all async results into a single dict, using the queue we set earlier.
+    # `all_points = {name: *name*,"points": [(x,y), (x,y), ...] }`
+    for _ in range(4):
         v = queue.get()
+        print(v)
         name = v["name"]
-        all_points[name] = v["points"]
+        if name in all_points:
+            all_points[name].extend(v["points"])
+        else:
+            all_points[name] = v["points"]
 
-    print("Process time:", (time.time() - start))
+    print(f"Process time: {(time.time() - start)}"+"\n")
     return all_points
 
 
@@ -78,7 +108,7 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
     def do_POST(self):        
         r, info = self.deal_post_data()
-        #print(r, info, "by: ", self.client_address)
+        #print(r, info, "by: ", self.client_address) #DEBUG
         f = io.BytesIO()
         if r:
             f.write(str.encode(info))
@@ -100,7 +130,6 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         pdict['CONTENT-LENGTH'] = int(self.headers['Content-Length'])
         if ctype == 'multipart/form-data':
             form = cgi.FieldStorage( fp=self.rfile, headers=self.headers, environ={'REQUEST_METHOD':'POST', 'CONTENT_TYPE':self.headers['Content-Type'], })
-            print (type(form))
             try:
                 if isinstance(form["media"], list):
                     for record in form["media"]:

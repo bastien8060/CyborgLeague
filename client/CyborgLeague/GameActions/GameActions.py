@@ -45,5 +45,26 @@ class Instance():
             time.sleep(0.1)
         return True
 
+    def attackNearbyBuilding(self, screen_elements) -> bool:
+        buildings = screen_elements["buildings_points"]
+        if len(buildings) < 1:
+            return False
+        building = buildings[0]
+        click_x = building[0]
+        click_y = building[1]
+
+        self.Control.Mouse.click(click_x,click_y)
+        return True
+
+    def attackAllBuildings(self, screen_elements) -> bool:
+        buildings = screen_elements["buildings_points"]
+
+        for building in buildings:
+            click_x = building[0]
+            click_y = building[1]
+            self.Control.Mouse.click(click_x,click_y)
+            time.sleep(0.1)
+        return True
+
     def __init__(self) -> None:
         self.Control = Control.Instance()

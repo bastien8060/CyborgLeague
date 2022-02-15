@@ -4,6 +4,13 @@ import time
 from .GameActions import GameActions as Actions
 from .VisionApi import VisionApi
 
+if os.name == 'nt':
+    from win32api import GetKeyState
+    from win32con import VK_CAPITAL 
+    getCaps = lambda *_: GetKeyState(VK_CAPITAL)
+else:
+    getCaps = lambda *_: True
+
 
 class CyborgLeagueBot:
 
@@ -16,7 +23,7 @@ class CyborgLeagueBot:
     def Queue(self):
         os.system("clear")
         self.analyse_display()
-        self.Actions.attackAllMinions(bot.screen_elements)
+        self.Actions.attackAllBuildings(bot.screen_elements)
 
     def analyse_display(self):
             img = self.Vision.screenshot()
@@ -28,7 +35,7 @@ class CyborgLeagueBot:
 async def start():
     bot.running = True
     while bot.running:
-        if bot.Vision.isReady():
+        if bot.Vision.isReady() and getCaps():
             if bot.Vision.cooldown:
                 time.sleep(0.5)
                 bot.Vision.cooldown = False
