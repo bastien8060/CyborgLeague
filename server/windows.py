@@ -64,17 +64,16 @@ def search(name,__image,__template,__threshold,__style):
 
 
 def searchall(image):
+    """
+    Not recommended to run on GNU/Linux or Unix, as the Linux kernel supports forking processes, which Windows/NT does not support.
+    For that reason this function was not made asynchroneous, which would require forking the main process for ideal performances. 
+    """
     start = time.time()
 
-    #image = search(image,building_1,0.91,[(0,0,255),4])
-    #image = search(image,building_2,0.91,[(0,0,255),4])
     image,buildings_points = search("buildings_points",image,building_2,0.91,[(0,0,255),4])
-    #image,turret_points = search(image,turret,0.91,[(0,0,255),4])
     image,minion_points = search("minion_points",image,minion,0.95,[(0,255,0),4])
-    #image = search(image,champion_1,0.80,[(255,0,255),4])
     image,champion_points = search("champion_points", image,champion_1,0.88,[(255,0,0),4])
-
-    image,buildings2_points = search("champion_points", image,champion_1,0.88,[(255,0,0),4])
+    image,buildings2_points = search("champion_points", image,building_1,0.88,[(255,0,0),4])
 
     buildings_points.extend(buildings2_points)
     #cv2.imwrite('output.png',image)
