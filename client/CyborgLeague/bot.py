@@ -21,7 +21,7 @@ class CyborgLeagueBot:
         self.screen_elements = {}
     
     def Queue(self):
-        os.system("clear")
+        os.system("cls")
         self.analyse_display()
         self.Actions.attackAllBuildings(bot.screen_elements)
 
