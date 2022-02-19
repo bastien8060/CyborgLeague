@@ -167,13 +167,13 @@ def main():
     method = cv2.TM_SQDIFF_NORMED
 
     # Read the images from the file
-    turret = resize(cv2.imread('training_data/img/patterns/units/turret.png'))
-    minion = resize(cv2.imread('training_data/img/patterns/units/minion.png'))
-    champion_1 = resize(cv2.imread('training_data/img/patterns/units/champion.png'))
-    champion_2 = resize(cv2.imread('training_data/img/patterns/units/champion_2.png'))
-    building_1 = resize(cv2.imread('training_data/img/patterns/units/building_1.png'))
-    building_2 = resize(cv2.imread('training_data/img/patterns/units/building_2.png'))
-    building_3 = resize(cv2.imread('training_data/img/patterns/units/building_3.jpg'))
+    turret = resize(cv2.imread('patterns/turret.png'))
+    minion = resize(cv2.imread('patterns/minion.png'))
+    champion_1 = resize(cv2.imread('patterns/champion.png'))
+    champion_2 = resize(cv2.imread('patterns/champion_2.png'))
+    building_1 = resize(cv2.imread('patterns/building_1.png'))
+    building_2 = resize(cv2.imread('patterns/building_2.png'))
+    building_3 = resize(cv2.imread('patterns/building_3.jpg'))
 
     # Change this to serve on a different port
     PORT = 44444
