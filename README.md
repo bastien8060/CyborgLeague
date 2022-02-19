@@ -11,10 +11,11 @@ This bot does not take in consideration allies making it not ver suitable to pla
 
 #### It can: 
 - detect Enemy `wards`/`minions`/`champions`/`turret`
-
-#### It will be able to:
 - check `wealth` (how much money the summoner has)
 - check `HP`+`Mana/Energy` (total/max and remaining amount for your summoner)
+- check the player's `LVL`+`Life Status` (if the player is alive or dead)
+
+#### It will be able to:
 - check all bought `Items` + can use the `Shop`
 - detect Ally `wards`/`minions`/`champions`/`turret`
 
