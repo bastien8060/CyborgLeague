@@ -19,13 +19,14 @@ else:
 class CyborgLeagueBot:
 
     def __init__(self):
+        Settings.init()
         lpath = Settings.get("client_LoL_loc")
         url = Settings.get("server_api_loc")
 
+        self.Slaw = Slaw.SLAW(lpath=lpath)
         self.Vision = VisionApi.Instance(url=url)
         self.Actions = Actions.Instance()
-        self.Stats = Stats.Instance()
-        self.Slaw = Slaw.SLAW(lpath=lpath)
+        self.Stats = Stats.Instance(Slaw=self.Slaw)
         self.running = False
         self.screen_elements = {}
 
