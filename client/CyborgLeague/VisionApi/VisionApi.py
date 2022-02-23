@@ -10,9 +10,7 @@ import requests
 from skimage.transform import resize
 
 if os.name == 'nt':
-    import win32con
-    import win32gui
-    import win32ui
+    import pywintypes
     from mss import mss
     from win32api import GetSystemMetrics
     from win32gui import GetForegroundWindow, GetWindowText

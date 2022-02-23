@@ -1,12 +1,18 @@
+from http import server
 import os
+import multiprocessing
 import time
+import asyncio
 
+from flask import Flask
+import flask_cors
+
+from .Console import Console
 from .GameActions import GameActions as Actions
 from .GameStats import GameStats as Stats
-from .VisionApi import VisionApi
-from .Slaw import Slaw
-from .Console import Console
 from .Settings import Settings
+from .Slaw import Slaw, SlawHelper
+from .VisionApi import VisionApi
 
 if os.name == 'nt':
     from win32api import GetKeyState
@@ -24,16 +30,29 @@ class CyborgLeagueBot:
         url = Settings.get("server_api_loc")
 
         self.Slaw = Slaw.SLAW(lpath=lpath)
+        self.SlawHelper = SlawHelper.Instance(self.Slaw)
         self.Vision = VisionApi.Instance(url=url)
         self.Actions = Actions.Instance()
         self.Stats = Stats.Instance(Slaw=self.Slaw)
         self.running = False
         self.screen_elements = {}
 
-        p = self.Slaw.get("/lol-summoner/v1/current-summoner")
-        Console.log(f"Connected as: {Console.Fore.RED}{p['displayName']}{Console.Style.RESET_ALL} - {Console.Fore.CYAN}LVL{p['summonerLevel']}")
+        self.api_init()
 
-    
+        #p = self.Slaw.get("/lol-summoner/v1/current-summoner")
+        #Console.log(f"Connected as: {Console.Fore.RED}{p['displayName']}{Console.Style.RESET_ALL} - {Console.Fore.CYAN}LVL{p['summonerLevel']}")
+
+    def api_init(self):
+        self.server = Flask(__name__)
+        flask_cors.CORS(self.server)
+        self.server.add_url_rule('/status','getstatus',view_func=lambda:"200")
+        self.server.add_url_rule('/api/v1/getSummonerName','getSummonerName',view_func=self.SlawHelper.getSummonerName)
+        self.server.add_url_rule('/api/v1/getSummonerLevel','getSummonerLevel',view_func=self.SlawHelper.getSummonerLevel)
+        asyncio.run(self.api_run())
+
+    async def api_run(self):
+        self.server.run(port=34850,host="0.0.0.0")
+
     def Queue(self):
         os.system("cls")
         self.analyse_display()
@@ -47,7 +66,9 @@ class CyborgLeagueBot:
             self.Vision.runhook(result)
         
 
-async def start():
+def start():
+    global bot
+    bot = CyborgLeagueBot()
     bot.running = True
     while bot.running:
         if bot.Vision.isReady() and getCaps():
@@ -59,5 +80,4 @@ async def start():
             bot.Vision.cooldown = True
             time.sleep(0.01)
 
-bot = CyborgLeagueBot()
-
+bot = None

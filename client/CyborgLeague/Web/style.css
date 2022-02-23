@@ -1,0 +1,356 @@
+@font-face {
+  font-family: Beaufort;
+  src: url(https://raw.githubusercontent.com/doceazedo/hextech-css/master/dist/fonts/Beaufort-Regular.ttf);
+}
+
+body {
+  color: #E8E3D1;
+  font-family: Beaufort;
+}
+
+.window{
+  height:100vh;
+  width:100vw;
+  border-top: 2px solid #8F6D2E; 
+  overflow:hidden;
+}
+
+.arrow-button{
+  margin-left:30px;
+}
+
+
+body{
+  background-color:8F6D2E;
+  margin:0;
+  overflow:hidden;
+}
+.top_bar{
+  padding-top:27px;
+  height:73px;
+  width:100%;
+  border-bottom:1px solid #3D4143;
+}
+
+.pfp-frame{
+  height:80px;
+  width:75px;
+  margin-left:-5px;
+  margin-top:-5px;
+}
+
+#level{
+  position:absolute;
+  margin-top:-23px;
+  margin-left:26px;
+  font-size: 12px;
+}
+
+.pfp{
+  border-radius:50%;
+  margin-top: 10px;
+  margin-left: 13px;
+  background-image:url(https://ddragon.leagueoflegends.com/cdn/11.24.1/img/profileicon/1.png);
+  width:60px;
+  height:65px;
+  float:left;
+}
+
+.icon{
+  height:13px;
+  float:right;
+  margin-right:20px;
+}
+
+.page-content{
+  background-color:rgba(0,0,0,0.8);
+  width:50%;
+  height:60%;
+  margin:auto;
+position:fixed;
+  margin-left:200px;
+  margin-top:150px;
+top:0;
+bottom:0;
+left:0;
+right:0;
+}
+
+.profile-side{
+  padding-top:10px;
+  float:right;
+  height:100%;
+  width:60%;
+  color:white;
+}
+
+#username{
+  font-weight:900;
+  margin-left:5px;
+}
+
+.profile_info{
+  padding-top: 30px;
+  color: #E8E3D1;
+    
+}
+
+.profile_box{
+  height:100px;
+  width:100%;
+  border-bottom:1px solid #3D4143;
+}
+
+
+.main_screen{
+  background-color:rgba(1,10,19,.6);
+  height:100%;
+  width:100%;
+}
+
+.main_screen_bg{
+  float:left;
+  height:100%;
+  width:82%;
+  background-image:url(https://cdn1.dotesports.com/wp-content/uploads/2022/01/26115454/wild-rift.jpg);
+  background-size:cover;
+  background-repeat:none;
+}
+
+.sidebar{
+  float: left; 
+  background-color:#010A13;
+  width: 18%;
+  height:100%;
+  overflow: hidden;
+}
+
+.status{
+  height:25px;
+}
+
+/**
+https://www.gamespace.com/wp-content/uploads/2022/01/League-of-Legends-Wild-Rift-Lunar-Revel-2022-Event-Trailer.png
+
+https://cdn.earlygame.com/uploads/images/Firecracker-Teemo-splash.jpeg
+**/
+
+
+
+img {
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -o-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-drag: none;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* GENERIC
+   ============================= */
+
+button:focus {
+  outline: 0;
+}
+
+.button {
+  font-family: 'Beaufort';
+  text-transform: uppercase;
+  font-size: 18px;
+  color: #f0e6d2;
+  padding: .75rem 2rem;
+}
+
+.button.is-tiny {
+  font-size: 16px;
+  padding: .375rem 2rem;
+  border-width: 2px !important;
+}
+
+.button[disabled] {
+  border-image: linear-gradient(#4c5155, #4c5155) 1 !important;
+  background: #1f242a !important;
+  color: #4c5155 !important;
+}
+
+/* PRIMARY BUTTON
+   ============================= */
+
+.button.is-primary {
+  border: 3px solid transparent;
+  background: #1e2328;
+  border-image: linear-gradient(#08abac, #01698b) 1;
+  transition: all ease .5s;
+}
+
+.button.is-primary:not([disabled]):hover {
+  background-image: url(img/btn.jpg);
+  background-position: center center;
+  background-size: cover;
+  box-shadow: 0 0 10px 4px rgba(192, 252, 253, .4), inset 0 0 5px 2px rgba(192, 252, 253, .3);
+  border: 3px solid rgba(192, 252, 253, .75);
+  cursor: pointer;
+}
+
+/* SECONDARY BUTTON
+   ============================= */
+
+.button.is-secondary {
+  border: 3px solid;
+  border-radius: 0;
+  background: #242731;
+  border-image: linear-gradient(#f6c97f, #ca9d4b) 1;
+  transition: all ease .25s;
+}
+
+.button.is-secondary:not([disabled]):hover {
+  box-shadow: 0 0 5px 2px rgba(192,252,253,.4), inset 0 0 5px 2px rgba(192,252,253,.3);
+  border: 3px solid #eee2cc;
+  cursor: pointer;
+}
+
+/* ARROW BUTTON
+   ============================= */
+
+.arrow-button {
+  display: inline-flex;
+  position: relative;
+  background-color: #000a17;
+  padding: 5px;
+  border: 1px solid #c8a763;
+  border-top-left-radius: 25px;
+  border-bottom-left-radius: 25px;
+}
+
+.arrow-button::before {
+  content: '';
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  height: 32px;
+  width: 32px;
+  box-sizing: border-box;
+  border: 2px solid #05222d;
+}
+
+.arrow-button .main {
+  shape-outside: polygon(0 0, calc(100% - 20px) 0%, 100% 50%, calc(100% - 20px) 100%, 0% 100%);
+  clip-path: polygon(0 0, calc(100% - 15px) 0%, 100% 50%, calc(100% - 15px) 100%, 0% 100%);
+  background: linear-gradient(#018699, #006284);
+  height: 32px;
+  min-width: 150px;
+  cursor: pointer;
+  border: none;
+  font-family: 'Beaufort';
+  font-weight: bold;
+  font-size: 16px;
+  color: #a3c0c0;
+  text-transform: uppercase;
+  position: relative;
+  margin-left: -16px;
+  padding: 0 48px;
+}
+
+.arrow-button .main::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  shape-outside: polygon(2px 2px, calc(100% - 22px) 2px, calc(100% - 4px) 50%, calc(100% - 22px) calc(100% - 2px), 2px calc(100% - 2px));
+  clip-path: polygon(2px 2px, calc(100% - 16px) 2px, calc(100% - 3px) 50%, calc(100% - 16px) calc(100% - 2px), 2px calc(100% - 2px));
+  background-color: #1e222c;
+  height: 32px;
+  width: 100%;
+  z-index: -1;
+}
+
+.arrow-button .main::after {
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: -23px;
+  height: 42px;
+  width: 42px;
+  box-sizing: content-box;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  background: linear-gradient(#000a17, #000a17) padding-box, linear-gradient(#018699, #006284) border-box;
+}
+
+.arrow-button .circle {
+  height: 32px;
+  width: 32px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  background: linear-gradient(#202425, #202425) padding-box, linear-gradient(#c8a763, #715b29) border-box;
+  color: #c5c09a;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.arrow-button:not(.is-disabled) .main:hover {
+  background: linear-gradient(#83d7ca, #1f8faf);
+  color: #e2e2d8;
+}
+
+.arrow-button:not(.is-disabled) .main:hover::before {
+  background: linear-gradient(#152932, #0d394a);
+}
+
+.arrow-button:not(.is-disabled) .main:hover::after {
+  background: linear-gradient(#000a17, #000a17) padding-box, linear-gradient(#83d7ca, #1f8faf) border-box;
+}
+
+.arrow-button:not(.is-disabled) .circle:hover {
+  background: linear-gradient(#202425, #202425) padding-box, linear-gradient(#d4cdca, #a37b2e) border-box;
+  color: #f4eada;
+}
+
+.arrow-button.is-disabled .main {
+  background: #4c5155;
+  color: #4c5155;
+}
+
+.arrow-button.is-disabled .main::before {
+  background: #1f242a;
+}
+
+.arrow-button.is-disabled .main::after {
+  background: linear-gradient(#000a17, #000a17) padding-box, linear-gradient(#4c5155, #4c5155) border-box;
+}
+
+.arrow-button.is-disabled .circle {
+  background: linear-gradient(#1f242a, #1f242a) padding-box, linear-gradient(#4c5155, #4c5155) border-box;
+  color: #4c5155;
+}
