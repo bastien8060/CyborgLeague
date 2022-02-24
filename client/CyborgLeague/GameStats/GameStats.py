@@ -16,7 +16,7 @@ class Instance():
             time.sleep(0.01)
 
     def reload(self) -> bool:
-        self.stats = self.slaw.get_live("/liveclientdata/activeplayer")
+        self.stats = self.Slaw.get_live("/liveclientdata/activeplayer")
         return True
 
     def needsEnergy(self) -> bool:

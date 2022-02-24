@@ -1,11 +1,13 @@
-from http import server
-import os
-import multiprocessing
-import time
 import asyncio
+import multiprocessing
+import os
+import time
+from ast import arg
+from http import server
+from threading import Thread
 
-from flask import Flask
 import flask_cors
+from flask import Flask
 
 from .Console import Console
 from .GameActions import GameActions as Actions
@@ -39,19 +41,31 @@ class CyborgLeagueBot:
 
         self.api_init()
 
-        #p = self.Slaw.get("/lol-summoner/v1/current-summoner")
-        #Console.log(f"Connected as: {Console.Fore.RED}{p['displayName']}{Console.Style.RESET_ALL} - {Console.Fore.CYAN}LVL{p['summonerLevel']}")
+        p = self.Slaw.get("/lol-summoner/v1/current-summoner")
+        Console.log(f"Connected as: {Console.Fore.RED}{p['displayName']}{Console.Style.RESET_ALL} - {Console.Fore.CYAN}LVL{p['summonerLevel']}")
+
+    def start(self):
+        self.running = True
+        return True
+
+    def stop(self):
+        self.running = False
+        return True
 
     def api_init(self):
         self.server = Flask(__name__)
         flask_cors.CORS(self.server)
-        self.server.add_url_rule('/status','getstatus',view_func=lambda:"200")
+        self.server.add_url_rule('/status','getstatus',view_func=lambda:"true" if self.running else "false")
         self.server.add_url_rule('/api/v1/getSummonerName','getSummonerName',view_func=self.SlawHelper.getSummonerName)
         self.server.add_url_rule('/api/v1/getSummonerLevel','getSummonerLevel',view_func=self.SlawHelper.getSummonerLevel)
-        asyncio.run(self.api_run())
+        self.server.add_url_rule('/api/v1/stop','stop_bot',view_func=self.stop)
+        self.server.add_url_rule('/api/v1/start','start_bot',view_func=self.start)
+        thread = Thread(target=self.api_run)
+        thread.daemon = True
+        thread.start()
 
-    async def api_run(self):
-        self.server.run(port=34850,host="0.0.0.0")
+    def api_run(self):
+        asyncio.run(self.server.run(port=34850,host="0.0.0.0"))
 
     def Queue(self):
         os.system("cls")
@@ -60,10 +74,10 @@ class CyborgLeagueBot:
         self.Actions.attackAllBuildings(bot.screen_elements)
 
     def analyse_display(self):
-            img = self.Vision.screenshot()
-            duration, result = self.Vision.upload(img)
-            self.screen_elements = result
-            self.Vision.runhook(result)
+        img = self.Vision.screenshot()
+        duration, result = self.Vision.upload(img)
+        self.screen_elements = result
+        self.Vision.runhook(result)
         
 
 def start():

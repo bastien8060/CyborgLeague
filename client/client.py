@@ -87,6 +87,7 @@ def main():
     CyborgLeagueLoop = CyborgLeagueLoopInstance()
     multiprocessing.freeze_support()
     CyborgLeagueThread = multiprocessing.Process(target=CyborgLeagueLoop.start)
+    CyborgLeagueThread.daemon=True
     CyborgLeagueLoop.shutdown_handler_init(CyborgLeagueThread)
     CyborgLeagueThread.start()
 
