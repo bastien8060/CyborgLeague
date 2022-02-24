@@ -46,11 +46,11 @@ class CyborgLeagueBot:
 
     def start(self):
         self.running = True
-        return True
+        return "200"
 
     def stop(self):
         self.running = False
-        return True
+        return "200"
 
     def api_init(self):
         self.server = Flask(__name__)
@@ -71,10 +71,12 @@ class CyborgLeagueBot:
         os.system("cls")
         self.analyse_display()
         self.Stats.reload()
-        self.Actions.attackAllBuildings(bot.screen_elements)
+        #self.Actions.attackAllBuildings(bot.screen_elements)
 
     def analyse_display(self):
         img = self.Vision.screenshot()
+        #with open("sc.jpg","W") as f:
+        #    f.write(img)
         duration, result = self.Vision.upload(img)
         self.screen_elements = result
         self.Vision.runhook(result)
@@ -83,9 +85,8 @@ class CyborgLeagueBot:
 def start():
     global bot
     bot = CyborgLeagueBot()
-    bot.running = True
-    while bot.running:
-        if bot.Vision.isReady() and getCaps():
+    while True:
+        if bot.Vision.isReady() and getCaps() and bot.running:
             if bot.Vision.cooldown:
                 time.sleep(0.5)
                 bot.Vision.cooldown = False

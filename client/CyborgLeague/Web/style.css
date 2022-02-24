@@ -282,6 +282,24 @@ button:focus {
   padding: 0 48px;
 }
 
+.arrow-button .main[disabled], .arrow-button .main:disabled {
+  shape-outside: polygon(0 0, calc(100% - 20px) 0%, 100% 50%, calc(100% - 20px) 100%, 0% 100%);
+  clip-path: polygon(0 0, calc(100% - 15px) 0%, 100% 50%, calc(100% - 15px) 100%, 0% 100%);
+  background: linear-gradient(#606060, #484848);
+  height: 32px;
+  min-width: 150px;
+  cursor: pointer;
+  border: none;
+  font-family: 'Beaufort';
+  font-weight: bold;
+  font-size: 16px;
+  color: #a3c0c0;
+  text-transform: uppercase;
+  position: relative;
+  margin-left: -16px;
+  padding: 0 48px;
+}
+
 .arrow-button .main::before {
   content: '';
   position: absolute;
@@ -308,6 +326,20 @@ button:focus {
   background: linear-gradient(#000a17, #000a17) padding-box, linear-gradient(#018699, #006284) border-box;
 }
 
+.arrow-button .main[disabled]::after, .arrow-button .main:disabled::after {
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: -23px;
+  height: 42px;
+  width: 42px;
+  box-sizing: content-box;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  background: linear-gradient(#000a17, #000a17) padding-box, linear-gradient(#606060, #484848) border-box;
+}
+
+
 .arrow-button .circle {
   height: 32px;
   width: 32px;
@@ -319,38 +351,49 @@ button:focus {
   z-index: 1;
 }
 
-.arrow-button:not(.is-disabled) .main:hover {
+.arrow-button .circle:disabled, .arrow-button .circle[disabled] {
+  height: 32px;
+  width: 32px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  background: linear-gradient(#202425, #202425) padding-box, linear-gradient(#A9A9A9, #5C5C5C) border-box;
+  color: #BDBDBD;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.arrow-button .main:hover:enabled:hover {
   background: linear-gradient(#83d7ca, #1f8faf);
   color: #e2e2d8;
 }
 
-.arrow-button:not(.is-disabled) .main:hover::before {
+.arrow-button .main:hover:enabled:before {
   background: linear-gradient(#152932, #0d394a);
 }
 
-.arrow-button:not(.is-disabled) .main:hover::after {
+.arrow-button .main:hover:enabled::after {
   background: linear-gradient(#000a17, #000a17) padding-box, linear-gradient(#83d7ca, #1f8faf) border-box;
 }
 
-.arrow-button:not(.is-disabled) .circle:hover {
+.arrow-button .circle:hover:enabled {
   background: linear-gradient(#202425, #202425) padding-box, linear-gradient(#d4cdca, #a37b2e) border-box;
   color: #f4eada;
 }
 
-.arrow-button.is-disabled .main {
+.arrow-button:disabled .main {
   background: #4c5155;
   color: #4c5155;
 }
 
-.arrow-button.is-disabled .main::before {
+.arrow-button:disabled .main::before {
   background: #1f242a;
 }
 
-.arrow-button.is-disabled .main::after {
+.arrow-button:disabled .main::after {
   background: linear-gradient(#000a17, #000a17) padding-box, linear-gradient(#4c5155, #4c5155) border-box;
 }
 
-.arrow-button.is-disabled .circle {
+.arrow-button:disabled .circle {
   background: linear-gradient(#1f242a, #1f242a) padding-box, linear-gradient(#4c5155, #4c5155) border-box;
   color: #4c5155;
 }
