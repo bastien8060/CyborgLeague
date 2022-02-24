@@ -11,14 +11,15 @@ def CoordinateCorrector(xy,name):
     Eg. Corrects the coordinates from a minion's healthbar to the actual position of the minion."""
     xy[0] += {
         'minion_points': 5,
+        'ally_minion_points': 5,
         'champion_points': 20,
         'buildings_points': 20,
     }[name]
     xy[1] += {
         'minion_points': 10,
+        'ally_minion_points': 10,
         'champion_points': 80,
-        'buildings_points': 200,
-
+        'buildings_points': 0,
     }[name]
     return xy
 
@@ -75,22 +76,25 @@ def searchall(image):
     building2_process = Process(target=search, args=(image,building_2,0.91,[(0,0,255),4],"buildings_points", queue))
     minion_process = Process(target=search, args=(image,minion,0.95,[(0,255,0),4], "minion_points", queue))
     champion_process = Process(target=search, args=(image,champion_1,0.88,[(255,0,255),4], "champion_points", queue))
+    ally_minion_process = Process(target=search, args=(image,ally_minion,0.92,[(255,0,255),4], "ally_minion_points", queue))
 
     minion_process.start()
     turret_process.start()
     building2_process.start()
     champion_process.start()
+    ally_minion_process.start()
 
     turret_process.join()
     building2_process.join()
     minion_process.join()
     champion_process.join()
+    ally_minion_process.join()
 
     all_points = {}
     
     # Merges together all async results into a single dict, using the queue we set earlier.
     # `all_points = {name: *name*,"points": [(x,y), (x,y), ...] }`
-    for _ in range(4):
+    for _ in range(5):
         v = queue.get()
         print(v)
         name = v["name"]
@@ -163,7 +167,7 @@ def resize(src):
 
 
 def main():
-    global turret, minion, champion_1, champion_2, building_1, building_2, building_3, method
+    global turret, minion, champion_1, champion_2, building_1, building_2, building_3, ally_minion, method
     method = cv2.TM_SQDIFF_NORMED
 
     # Read the images from the file
@@ -174,6 +178,7 @@ def main():
     building_1 = resize(cv2.imread('patterns/building_1.png'))
     building_2 = resize(cv2.imread('patterns/building_2.png'))
     building_3 = resize(cv2.imread('patterns/building_3.jpg'))
+    ally_minion = resize(cv2.imread('patterns/ally_minion.png'))
 
     # Change this to serve on a different port
     PORT = 44444

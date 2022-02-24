@@ -75,8 +75,6 @@ class CyborgLeagueBot:
 
     def analyse_display(self):
         img = self.Vision.screenshot()
-        #with open("sc.jpg","W") as f:
-        #    f.write(img)
         duration, result = self.Vision.upload(img)
         self.screen_elements = result
         self.Vision.runhook(result)

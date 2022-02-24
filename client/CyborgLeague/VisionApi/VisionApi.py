@@ -68,11 +68,18 @@ class Instance:
     def isReady(self) -> bool:
         return GetWindowText(GetForegroundWindow()) == "League of Legends (TM) Client"
 
-    def screenshot(self):
+    def screenshot(self,debug=False):
         w = GetSystemMetrics(0)
         h = GetSystemMetrics(1)
+        
+        import mss.tools
+        
+        screenshot = self.__sct.grab(self.__monitor_1)
 
-        sct_original = np.asarray(self.__sct.grab(self.__monitor_1))
+        if debug:
+            mss.tools.to_png(screenshot.rgb, screenshot.size, output="output.png")
+
+        sct_original = np.asarray(screenshot)
         sct_img = cv2.cvtColor(sct_original, cv2.COLOR_BGRA2BGR)
         small = sct_img[0:1080, 0:1920]
         return small
@@ -81,10 +88,12 @@ class Instance:
         champions = result["champion_points"]
         minions = result["minion_points"]
         buildings = result["buildings_points"]
+        ally_minion = result["ally_minion_points"]
 
         print(f"Champions: {len(champions)}")
         print(f"Minions: {len(minions)}")
         print(f"Buildings: {len(buildings)}")
+        print(f"Ally Minions: {len(ally_minion)}")
 
 
     def __init__(self, url="http://127.0.0.1:44444"):
