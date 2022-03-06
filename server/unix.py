@@ -1,11 +1,13 @@
 # pylint: skip-file
 #!/usr/env python3
+import os
+import sys
+import time
+
 import cv2
 import numpy as np
-import time
 import requests
-
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, redirect, render_template, request, url_for
 
 app = Flask(__name__)
 
@@ -210,6 +212,13 @@ def handle_upload():
         return json.dumps(screen)
     return "error"
 
+def resource_path(source):
+    if getattr(sys, 'frozen', False):
+        base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+        return os.path.join(base_path, source)
+    else:
+        return source
+
 def main():
     global points
     method = cv2.TM_SQDIFF_NORMED
@@ -217,15 +226,15 @@ def main():
     points = PointsCollection()
 
     # Read the images from the file
-    points.minion = cv2.cvtColor(cv2.imread('patterns/minion.png'), cv2.COLOR_BGR2GRAY)
-    points.champion_1 = cv2.cvtColor(cv2.imread('patterns/champion.png'), cv2.COLOR_BGR2GRAY)
-    points.building_1 = cv2.cvtColor(cv2.imread('patterns/building_1.png'), cv2.COLOR_BGR2GRAY)
-    points.building_2 = cv2.cvtColor(cv2.imread('patterns/building_2.png'), cv2.COLOR_BGR2GRAY)
-    points.ally_minion = cv2.cvtColor(cv2.imread('patterns/ally_minion.png'), cv2.COLOR_BGR2GRAY)
-    points.ally_champion_1 = cv2.cvtColor(cv2.imread('patterns/ally_champion.png'), cv2.COLOR_BGR2GRAY)
+    points.minion = cv2.cvtColor(cv2.imread(resource_path('patterns/minion.png')), cv2.COLOR_BGR2GRAY)
+    points.champion_1 = cv2.cvtColor(cv2.imread(resource_path('patterns/champion.png')), cv2.COLOR_BGR2GRAY)
+    points.building_1 = cv2.cvtColor(cv2.imread(resource_path('patterns/building_1.png')), cv2.COLOR_BGR2GRAY)
+    points.building_2 = cv2.cvtColor(cv2.imread(resource_path('patterns/building_2.png')), cv2.COLOR_BGR2GRAY)
+    points.ally_minion = cv2.cvtColor(cv2.imread(resource_path('patterns/ally_minion.png')), cv2.COLOR_BGR2GRAY)
+    points.ally_champion_1 = cv2.cvtColor(cv2.imread(resource_path('patterns/ally_champion.png')), cv2.COLOR_BGR2GRAY)
     #points.ally_champion_2 = cv2.imread('patterns/ally_champion_2.png')
-    points.ally_building_1 = cv2.cvtColor(cv2.imread('patterns/ally_building_1.png'), cv2.COLOR_BGR2GRAY)
-    points.ally_building_2 = cv2.cvtColor(cv2.imread('patterns/ally_building_2.png'), cv2.COLOR_BGR2GRAY)
+    points.ally_building_1 = cv2.cvtColor(cv2.imread(resource_path('patterns/ally_building_1.png')), cv2.COLOR_BGR2GRAY)
+    points.ally_building_2 = cv2.cvtColor(cv2.imread(resource_path('patterns/ally_building_2.png')), cv2.COLOR_BGR2GRAY)
 
     points.champions = {}
 
@@ -243,6 +252,7 @@ def main():
 if __name__ == "__main__":
     import json
     from multiprocessing import Process, SimpleQueue
+
     import bjoern
 
     main()
