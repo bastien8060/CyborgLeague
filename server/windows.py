@@ -182,9 +182,16 @@ def cleanup():
     server_process.kill()
     os._exit(0)
 
+def resource_path(source):
+    if getattr(sys, 'frozen', False):
+        base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+        return os.path.join(base_path, source)
+    else:
+        return "../"+source
+
 server_process = subprocess.Popen('wsl.exe -u root bash -c "cd ~/CyborgLeague/server;python3.6 unix.py"')
 
-with SysTrayIcon("../src/logo.ico", "CyborgLeague Server Starting...",on_quit=lambda _:cleanup()) as systray:
+with SysTrayIcon(resource_path("src/logo.ico"), "CyborgLeague Server Starting...",on_quit=lambda _:cleanup()) as systray:
     systray.update(hover_text="CyborgLeague Server Running")
 
 server_process.communicate()

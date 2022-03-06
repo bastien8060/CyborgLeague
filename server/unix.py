@@ -244,7 +244,7 @@ def main():
 
     for character in characters:
         champion = character["name"].replace(" ","").replace("'","").replace(".","")
-        points.champions[champion] = cv2.imread(f'patterns/champions_16x16/{champion}.png')
+        points.champions[champion] = cv2.imread(resource_path(f'patterns/champions_16x16/{champion}.png'))
 
     bjoern.run(app, "0.0.0.0", 39743)
 
