@@ -62,7 +62,10 @@ class SLAW:
             response = requests.get(url,verify=self.__ssl_cert, headers=auth).content.decode()
         except: # pylint: disable=bare-except
             response = '{"status":"error", "message":"client_not_playing"}'
-        return response
+        try:
+             return json.loads(response)
+        except:
+            return response
         #return json.loads(response)
 
 

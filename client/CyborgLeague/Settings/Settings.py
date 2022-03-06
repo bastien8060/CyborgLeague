@@ -4,7 +4,7 @@ import os
 
 json_default = '''{
     "client_LoL_loc":"D:\\\\Riot Games\\\\League of Legends",
-    "server_api_loc":"http://127.0.0.1:44444"
+    "server_api_loc":"http://127.0.0.1:39743/api/v1/upload"
 }'''
 
 def init():

@@ -1,34 +1,104 @@
 # pylint: skip-file
 #!/usr/env python3
 import http.server
+from click import pass_context
 import cv2
 import numpy as np
 import time
+import requests
+import imutils
 
+from flask import Flask, render_template, request, redirect, url_for
+
+app = Flask(__name__)
+
+
+class PointsCollection:
+    def __init__(self):
+        return
 
 def CoordinateCorrector(xy,name):
+    if name.startswith("hero_"):
+        return xy
+    name = name.replace("ally_","")
     """Corrects the coordinates from the health bar to the actual location to click the element.\n
     Eg. Corrects the coordinates from a minion's healthbar to the actual position of the minion."""
     xy[0] += {
         'minion_points': 5,
-        'ally_minion_points': 5,
         'champion_points': 20,
         'buildings_points': 20,
     }[name]
     xy[1] += {
         'minion_points': 10,
-        'ally_minion_points': 10,
         'champion_points': 80,
         'buildings_points': 0,
     }[name]
     return xy
 
-def search(__image,__template,__threshold,__style,name,queue):
-    print(f"starting {name}")
-    points = []
+
+def minimap_analysis(_img, champions):
+    championPoints = []
+
+    width, height = _img.shape[1::-1]
+    x1, x2 = int(width/1.2532), int(width/1.0088)
+    y1, y2 = int(height/1.5578), int(height/1.0172)
+
+    match_method = cv2.TM_SQDIFF_NORMED
+    img = _img.copy()[y1:y2,x1:x2]
+
+    for champion in champions:
+
+        template = points.champions[champion]
+
+        scale = 1.1
+
+        tmpl = cv2.resize(template, (0,0),fx = scale, fy=scale)
+
+        result = cv2.matchTemplate(img, tmpl, match_method)
+
+        _minVal, _maxVal, minLoc, maxLoc = cv2.minMaxLoc(result, None)
+
+        matchLoc = minLoc #maxLoc if not cv.TM_SQDIFF or cv.TM_SQDIFF_NORMED
+        # here perhaps try to normalize the results?
+        #endLoc = (matchLoc[0] + tmpl.shape[1],matchLoc[1] + tmpl.shape[0])
+
+        AverageLoc = int((matchLoc[0]*2 + tmpl.shape[1])/2),int((matchLoc[1]*2 + tmpl.shape[0])/2)
+
+        #cv2.rectangle(img, matchLoc, endLoc, (0,0,255), 1)
+        #cv2.imwrite(f"debug/debug_{scale}.png",img)
+        if _minVal < 0.3:
+            championPoints.append({"champion":champion,"location":AverageLoc,"p":_minVal})
+
+    return json.dumps(championPoints)
+
+
+
+
+
+
+def findColor(point,__image):
+    x1, y1 = int(point[0]) - 0, int(point[1]) - 2
+    x2, y2 = int(point[0]) + 10, int(point[1]) + 2
+    sample = __image[y1:y2, x1:x2]
+
+    avg = sample.mean(axis=0).mean(axis=0)
+
+    r,g,b = int(avg[2]),int(avg[1]),int(avg[0])
+
+    if r > g and r > b:
+        return 0
+    return 1
+
+
+def search(__color_image,__template,__threshold,name,queue):
+    #print(f"starting {name}")
+    allyPoints = []
+    enemyPoints = []
     h, w = __template.shape[:2]
 
-    method = cv2.TM_CCOEFF_NORMED
+    method = cv2.TM_CCOEFF_NORMED #try sqdiff and without normed
+
+    __image = cv2.cvtColor(__color_image, cv2.COLOR_BGR2GRAY)
 
     res = cv2.matchTemplate(__image, __template, method)
 
@@ -55,10 +125,18 @@ def search(__image,__template,__threshold,__style,name,queue):
             #__image = cv2.rectangle(__image,(max_loc[0]+25,max_loc[1]+50), (max_loc[0]+w+1+25, max_loc[1]+h+1+50), __style[0], __style[1] )
             averageXPoint = (max_loc[0]+max_loc[0]+w+51)/2
             averageYPoint = (max_loc[1]+max_loc[1]+h+101)/2
-            averagePoint = CoordinateCorrector([averageXPoint,averageYPoint],name)
-            points.append(averagePoint)
-    queue.put({"name":name,"points":points})
-    return #__image,points
+
+            color = findColor([(max_loc[0]+max_loc[0]+w)/2,(max_loc[1]+max_loc[1]+h)/2],__color_image)
+            
+            alt_name = "ally_"+name if color else name
+
+            averagePoint = CoordinateCorrector([averageXPoint,averageYPoint],alt_name)
+            
+            allyPoints.append(averagePoint) if color else enemyPoints.append(averagePoint)
+          
+    queue.put({"name":name,"points":enemyPoints})
+    queue.put({"name":"ally_"+name,"points":allyPoints})
+    return
 
 
 
@@ -68,130 +146,104 @@ def searchall(image):
     Uses python's multiprocessing. Only recommended on Linux, as windows lack of support in forking processes, makes this feature a bottleneck.\n
     Support on MacOS varies and may surprise some, as it is known to be buggy (Try with caution/not for the fainthearted).
     """
-    start = time.time()
 
     queue = SimpleQueue()
 
-    turret_process = Process(target=search, args=(image,building_1,0.91,[(0,0,255),4],"buildings_points", queue))
-    building2_process = Process(target=search, args=(image,building_2,0.91,[(0,0,255),4],"buildings_points", queue))
-    minion_process = Process(target=search, args=(image,minion,0.95,[(0,255,0),4], "minion_points", queue))
-    champion_process = Process(target=search, args=(image,champion_1,0.88,[(255,0,255),4], "champion_points", queue))
-    ally_minion_process = Process(target=search, args=(image,ally_minion,0.92,[(255,0,255),4], "ally_minion_points", queue))
+    turret_process = Process(target=search, args=(image,points.building_1,0.91,"buildings_points", queue))
+    building2_process = Process(target=search, args=(image,points.building_2,0.91,"buildings_points", queue))
+    minion_process = Process(target=search, args=(image,points.minion,0.96, "minion_points", queue))
+    champion_process = Process(target=search, args=(image,points.ally_champion_1,0.88, "champion_points", queue))
+
+    #champion_process = Process(target=search, args=(image,points.champion_1,0.98, "champion_points", queue))
+    #ally_minion_process = Process(target=search, args=(image,points.ally_minion,0.95, "ally_minion_points", queue))
+    #ally_turret_process = Process(target=search, args=(image,points.ally_building_1,0.91,"ally_buildings_points", queue))
+    #ally_building2_process = Process(target=search, args=(image,points.ally_building_2,0.91,"ally_buildings_points", queue))
+    #ally_champion2_process = Process(target=search, args=(image,points.ally_champion_2,0.88,[(255,0,255),4], "ally_champion_points", queue))
 
     minion_process.start()
     turret_process.start()
     building2_process.start()
     champion_process.start()
-    ally_minion_process.start()
 
+    minion_process.join()
     turret_process.join()
     building2_process.join()
-    minion_process.join()
     champion_process.join()
-    ally_minion_process.join()
 
     all_points = {}
     
     # Merges together all async results into a single dict, using the queue we set earlier.
     # `all_points = {name: *name*,"points": [(x,y), (x,y), ...] }`
-    for _ in range(5):
+    print("[*] Sorting async queue")
+    for _ in range(8):
         v = queue.get()
-        print(v)
+        #print(v)
         name = v["name"]
         if name in all_points:
             all_points[name].extend(v["points"])
         else:
             all_points[name] = v["points"]
-
-    print(f"Process time: {(time.time() - start)}"+"\n")
     return all_points
 
+def screen_analysis(img):
+    print("[*] Starting Async Threads: 8")
+    points = searchall(img)
+
+    return points
 
 
-class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
+@app.route("/", methods=['GET'])
+def home():
+    return "CyborgLeague OpenCV Server"
 
-    def do_POST(self):        
-        r, info = self.deal_post_data()
-        #print(r, info, "by: ", self.client_address) #DEBUG
-        f = io.BytesIO()
-        if r:
-            f.write(str.encode(info))
-        else:
-            f.write(b"Failed\n")
-        length = f.tell()
-        f.seek(0)
-        self.send_response(200)
-        self.send_header("Content-type", "text/plain")
-        self.send_header("Content-Length", str(length))
-        self.end_headers()
-        if f:
-            self.copyfile(f, self.wfile)
-            f.close()      
+@app.route("/api/v1/upload", methods=['GET', 'POST'])
+def handle_upload():
+    champions = json.loads(request.values['champions'])
 
-    def deal_post_data(self):
-        ctype, pdict = cgi.parse_header(self.headers['Content-Type'])
-        pdict['boundary'] = bytes(pdict['boundary'], "utf-8")
-        pdict['CONTENT-LENGTH'] = int(self.headers['Content-Length'])
-        if ctype == 'multipart/form-data':
-            form = cgi.FieldStorage( fp=self.rfile, headers=self.headers, environ={'REQUEST_METHOD':'POST', 'CONTENT_TYPE':self.headers['Content-Type'], })
-            try:
-                if isinstance(form["media"], list):
-                    for record in form["media"]:
-                        buf =  record.file.read()
-                        #use numpy to construct an array from the bytes
-                        x = np.fromstring(buf, dtype='uint8')
-                        #decode the array into an image
-                        img = cv2.imdecode(x, cv2.IMREAD_UNCHANGED)
-                        points = searchall(img)
-                else:
-                    buf = form["media"].file.read()
-                    #use numpy to construct an array from the bytes
-                    x = np.fromstring(buf, dtype='uint8')
-                    #decode the array into an image
-                    img = cv2.imdecode(x, cv2.IMREAD_UNCHANGED)
-                    points = searchall(img)
-                    
-            except IOError:
-                    return (False, "Can't create file to write, do you have permission to write?")
-        return (True, json.dumps(points))
+    uploaded_file = request.files['media']
+    if uploaded_file.filename != '':
+        start = time.time()
+        stream = uploaded_file.stream.read()
+        x = np.fromstring(stream, dtype='uint8')
+        img = cv2.imdecode(x, cv2.IMREAD_UNCHANGED)
+        minimap = minimap_analysis(img,champions)
+        screen = screen_analysis(img)
+        screen["minimap"] = minimap
+        print(f"Process time: {(time.time() - start)}"+"\n")
 
-
-
-
-
-
-def resize(src):
-    return src
-    height, width = src.shape[:2]
-    return cv2.resize(src, (0,0), fx=0.5, fy=0.5) 
-
+        return json.dumps(screen)
+    return "error"
+    
+ 
 
 def main():
-    global turret, minion, champion_1, champion_2, building_1, building_2, building_3, ally_minion, method
+    global points
     method = cv2.TM_SQDIFF_NORMED
 
+    points = PointsCollection()
+
     # Read the images from the file
-    turret = resize(cv2.imread('patterns/turret.png'))
-    minion = resize(cv2.imread('patterns/minion.png'))
-    champion_1 = resize(cv2.imread('patterns/champion.png'))
-    champion_2 = resize(cv2.imread('patterns/champion_2.png'))
-    building_1 = resize(cv2.imread('patterns/building_1.png'))
-    building_2 = resize(cv2.imread('patterns/building_2.png'))
-    building_3 = resize(cv2.imread('patterns/building_3.jpg'))
-    ally_minion = resize(cv2.imread('patterns/ally_minion.png'))
+    points.minion = cv2.cvtColor(cv2.imread('patterns/minion.png'), cv2.COLOR_BGR2GRAY)
+    points.champion_1 = cv2.cvtColor(cv2.imread('patterns/champion.png'), cv2.COLOR_BGR2GRAY)
+    points.building_1 = cv2.cvtColor(cv2.imread('patterns/building_1.png'), cv2.COLOR_BGR2GRAY)
+    points.building_2 = cv2.cvtColor(cv2.imread('patterns/building_2.png'), cv2.COLOR_BGR2GRAY)
+    points.ally_minion = cv2.cvtColor(cv2.imread('patterns/ally_minion.png'), cv2.COLOR_BGR2GRAY)
+    points.ally_champion_1 = cv2.cvtColor(cv2.imread('patterns/ally_champion.png'), cv2.COLOR_BGR2GRAY)
+    #points.ally_champion_2 = cv2.imread('patterns/ally_champion_2.png')
+    points.ally_building_1 = cv2.cvtColor(cv2.imread('patterns/ally_building_1.png'), cv2.COLOR_BGR2GRAY)
+    points.ally_building_2 = cv2.cvtColor(cv2.imread('patterns/ally_building_2.png'), cv2.COLOR_BGR2GRAY)
 
-    # Change this to serve on a different port
-    PORT = 44444
+    points.champions = {}
 
-    Handler = CustomHTTPRequestHandler
-    socketserver.TCPServer.allow_reuse_address = True
-    with socketserver.TCPServer(("", PORT), Handler) as httpd:
-        print("serving at port", PORT)
-        httpd.allow_reuse_address = True
-        try:
-            httpd.serve_forever()
-        except:
-            httpd.shutdown()
+
+    request = requests.get("https://raw.githubusercontent.com/ngryman/lol-champions/master/champions.json")
+    characters = json.loads(request.content.decode())
+
+    for character in characters:
+        champion = character["name"].replace(" ","").replace("'","").replace(".","")
+        points.champions[champion] = cv2.imread(f'patterns/champions_16x16/{champion}.png')
+
+    bjoern.run(app, "0.0.0.0", 39743)
 
 
 if __name__ == "__main__":
@@ -200,6 +252,7 @@ if __name__ == "__main__":
     import cgi
     import json
     from multiprocessing import Process, SimpleQueue
+    import bjoern
 
     main()
 

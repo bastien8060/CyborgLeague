@@ -52,7 +52,8 @@ class GUI():
                                             height=740,
                                             resizable=False,
                                             frameless=True,
-                                            easy_drag=True)
+                                            easy_drag=True,
+                                            background_color='#010A13')
 
         self.window.expose(self.minimize, self.shutdown)
 

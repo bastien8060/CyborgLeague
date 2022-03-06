@@ -397,3 +397,10 @@ button:focus {
   background: linear-gradient(#1f242a, #1f242a) padding-box, linear-gradient(#4c5155, #4c5155) border-box;
   color: #4c5155;
 }
+
+.arrow-button, #OffButton, #OnButton,.arrow-button *, .arrow-button *::after, .arrow-button *::before {
+  -webkit-transition: all 1s ease-in-out;
+  -moz-transition: all 1s ease-in-out;
+  -o-transition: all 1s ease-in-out;
+  transition: all 1s ease-in-out;
+}

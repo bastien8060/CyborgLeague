@@ -12,17 +12,16 @@ import cv2
 import numpy as np
 
 def CoordinateCorrector(xy,name):
+    name = name.replace("ally_","")
     """Corrects the coordinates from the health bar to the actual location to click the element.\n
     Eg. Corrects the coordinates from a minion's healthbar to the actual position of the minion."""
     xy[0] += {
         'minion_points': 5,
-        'ally_points': 5,
         'champion_points': 20,
         'buildings_points': 20,
     }[name]
     xy[1] += {
         'minion_points': 10,
-        'ally_minion_points': 10,
         'champion_points': 80,
         'buildings_points': 0,
     }[name]
@@ -75,10 +74,17 @@ def searchall(image):
     image,buildings_points = search("buildings_points",image,building_2,0.91,[(0,0,255),4])
     image,minion_points = search("minion_points",image,minion,0.95,[(0,255,0),4])
     image,champion_points = search("champion_points", image,champion_1,0.88,[(255,0,0),4])
-    image,buildings2_points = search("champion_points", image,building_1,0.88,[(255,0,0),4])
-    image,ally_minion_points = search("champion_points", image,ally_minion,0.88,[(255,0,0),4])
+    image,buildings2_points = search("buildings_points", image,building_1,0.88,[(255,0,0),4])
+
+    image,ally_minion_points = search("ally_minion_points", image,ally_minion,0.88,[(255,0,0),4])
+    image,ally_buildings_points = search("ally_buildings_points",image,ally_building_1,0.91,[(0,0,255),4])
+    image,ally_champion_points = search("ally_champion_points", image,ally_champion_1,0.88,[(255,0,0),4])
+    image,ally_champion2_points = search("ally_champion_points", image,ally_champion_2,0.88,[(255,0,0),4])
+    image,ally_buildings2_points = search("ally_buildings_points", image,ally_building_2,0.88,[(255,0,0),4])
 
     buildings_points.extend(buildings2_points)
+    ally_buildings_points.extend(ally_buildings2_points)
+    ally_champion_points.extend(ally_champion2_points)
     #cv2.imwrite('output.png',image)
 
     all_points = {
@@ -86,7 +92,9 @@ def searchall(image):
         #"turret_points": turret_points,
         "minion_points": minion_points,
         "champion_points": champion_points,
-        "ally_minion_points": ally_minion_points
+        "ally_minion_points": ally_minion_points,
+        "ally_buildings_points": ally_buildings_points,
+        "ally_champion_points": ally_champion_points
     }
 
     print(f"Process time: {(time.time() - start)}"+"\n")
@@ -158,20 +166,24 @@ def resize(src):
 method = cv2.TM_SQDIFF_NORMED
 
 # Read the images from the file
-turret = resize(cv2.imread('training_data/img/patterns/units/turret.png'))
-minion = resize(cv2.imread('training_data/img/patterns/units/minion.png'))
-champion_1 = resize(cv2.imread('training_data/img/patterns/units/champion.png'))
-champion_2 = resize(cv2.imread('training_data/img/patterns/units/champion_2.png'))
-building_1 = resize(cv2.imread('training_data/img/patterns/units/building_1.png'))
-building_2 = resize(cv2.imread('training_data/img/patterns/units/building_2.png'))
-building_3 = resize(cv2.imread('training_data/img/patterns/units/building_3.jpg'))
-ally_minion = resize(cv2.imread('training_data/img/patterns/units/ally_minion.png'))
+minion = resize(cv2.imread('patterns/minion.png'))
+champion_1 = resize(cv2.imread('patterns/champion.png'))
+building_1 = resize(cv2.imread('patterns/building_1.png'))
+building_2 = resize(cv2.imread('patterns/building_2.png'))
+
+ally_minion = resize(cv2.imread('patterns/ally_minion.png'))
+ally_champion_1 = resize(cv2.imread('patterns/ally_champion.png'))
+ally_champion_2 = resize(cv2.imread('patterns/ally_champion.png'))
+ally_building_1 = resize(cv2.imread('patterns/ally_building_1.png'))
+ally_building_2 = resize(cv2.imread('patterns/ally_building_2.png'))
+
+
 
 
 
 
 # Change this to serve on a different port
-PORT = 44444
+PORT = 39743
 
 Handler = CustomHTTPRequestHandler
 socketserver.TCPServer.allow_reuse_address = True
