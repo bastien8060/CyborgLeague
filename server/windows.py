@@ -16,6 +16,15 @@ from pywin.mfc import dialog
 from tendo import singleton
 from win32com.shell import shell, shellcon
 
+def splashscreen_handler(self):
+        try:
+            import pyi_splash
+            pyi_splash.close()
+        except:
+            pass
+
+splashscreen_handler()
+
 
 def MakeDlgTemplate(name):
     style = (
