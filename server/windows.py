@@ -16,7 +16,7 @@ from pywin.mfc import dialog
 from tendo import singleton
 from win32com.shell import shell, shellcon
 
-def splashscreen_handler(self):
+def splashscreen_handler():
         try:
             import pyi_splash
             pyi_splash.close()
