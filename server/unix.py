@@ -1,17 +1,13 @@
 # pylint: skip-file
 #!/usr/env python3
-import http.server
-from click import pass_context
 import cv2
 import numpy as np
 import time
 import requests
-import imutils
 
 from flask import Flask, render_template, request, redirect, url_for
 
 app = Flask(__name__)
-
 
 class PointsCollection:
     def __init__(self):
@@ -213,8 +209,6 @@ def handle_upload():
 
         return json.dumps(screen)
     return "error"
-    
- 
 
 def main():
     global points
@@ -247,9 +241,6 @@ def main():
 
 
 if __name__ == "__main__":
-    import socketserver
-    import io
-    import cgi
     import json
     from multiprocessing import Process, SimpleQueue
     import bjoern

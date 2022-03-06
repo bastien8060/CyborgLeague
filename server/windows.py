@@ -1,199 +1,184 @@
-# pylint: skip-file
-#!/usr/env python3
-import cgi
-import http.server
-import io
-import json
-import socketserver
+import os
+import shutil
+import subprocess
 import sys
+import threading
 import time
 
-import cv2
-import numpy as np
-
-def CoordinateCorrector(xy,name):
-    name = name.replace("ally_","")
-    """Corrects the coordinates from the health bar to the actual location to click the element.\n
-    Eg. Corrects the coordinates from a minion's healthbar to the actual position of the minion."""
-    xy[0] += {
-        'minion_points': 5,
-        'champion_points': 20,
-        'buildings_points': 20,
-    }[name]
-    xy[1] += {
-        'minion_points': 10,
-        'champion_points': 80,
-        'buildings_points': 0,
-    }[name]
-    return xy
-
-def search(name,__image,__template,__threshold,__style):
-    points = []
-    h, w = __template.shape[:2]
-
-    method = cv2.TM_CCOEFF_NORMED
-
-    res = cv2.matchTemplate(__image, __template, method)
-
-    # fake out max_val for first run through loop
-    max_val = 1
-    prev_min_val, prev_max_val, prev_min_loc, prev_max_loc = None, None, None, None
-    while max_val > __threshold:
-        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
-        
-        # Prevent infinite loop. If those 4 values are the same as previous ones, break the loop.
-        if prev_min_val == min_val and prev_max_val == max_val and prev_min_loc == min_loc and prev_max_loc == max_loc:
-            break
-        else:
-            prev_min_val, prev_max_val, prev_min_loc, prev_max_loc = min_val, max_val, min_loc, max_loc
-        
-        if max_val > __threshold:
-            # Prevent start_row, end_row, start_col, end_col be out of range of image
-            start_row = max_loc[1] - h // 2 if max_loc[1] - h // 2 >= 0 else 0
-            end_row = max_loc[1] + h // 2 + 1 if max_loc[1] + h // 2 + 1 <= res.shape[0] else res.shape[0]
-            start_col = max_loc[0] - w // 2 if max_loc[0] - w // 2 >= 0 else 0
-            end_col = max_loc[0] + w // 2 + 1 if max_loc[0] + w // 2 + 1 <= res.shape[1] else res.shape[0]
-
-            res[start_row: end_row, start_col: end_col] = 0
-            __image = cv2.rectangle(__image,(max_loc[0]+25,max_loc[1]+50), (max_loc[0]+w+1+25, max_loc[1]+h+1+50), __style[0], __style[1] )
-            averageXPoint = (max_loc[0]+max_loc[0]+w+51)/2
-            averageYPoint = (max_loc[1]+max_loc[1]+h+101)/2
-            averagePoint = CoordinateCorrector([averageXPoint,averageYPoint],name)
-            points.append(averagePoint)
-    return __image,points
+import pyuac
+import win32api
+import win32con
+import win32event
+import win32ui
+from infi.systray import SysTrayIcon
+from pywin.mfc import dialog
+from tendo import singleton
+from win32com.shell import shell, shellcon
 
 
+def MakeDlgTemplate(name):
+    style = (
+        win32con.DS_MODALFRAME
+        | win32con.WS_POPUP
+        | win32con.WS_VISIBLE
+        | win32con.WS_CAPTION
+        | win32con.WS_SYSMENU
+        | win32con.DS_SETFONT
+    )
+    cs = win32con.WS_CHILD | win32con.WS_VISIBLE
 
-def searchall(image):
-    """
-    Not recommended to run on GNU/Linux or Unix, as the Linux kernel supports forking processes, which Windows/NT does not support.
-    For that reason this function was not made asynchroneous, which would require forking the main process for ideal performances. 
-    """
-    start = time.time()
+    w = 215
+    h = 36
 
-    image,buildings_points = search("buildings_points",image,building_2,0.91,[(0,0,255),4])
-    image,minion_points = search("minion_points",image,minion,0.95,[(0,255,0),4])
-    image,champion_points = search("champion_points", image,champion_1,0.88,[(255,0,0),4])
-    image,buildings2_points = search("buildings_points", image,building_1,0.88,[(255,0,0),4])
+    dlg = [
+        [
+            name,
+            (0, 0, w, h),
+            style,
+            None,
+            (8, "MS Sans Serif"),
+        ],
+    ]
 
-    image,ally_minion_points = search("ally_minion_points", image,ally_minion,0.88,[(255,0,0),4])
-    image,ally_buildings_points = search("ally_buildings_points",image,ally_building_1,0.91,[(0,0,255),4])
-    image,ally_champion_points = search("ally_champion_points", image,ally_champion_1,0.88,[(255,0,0),4])
-    image,ally_champion2_points = search("ally_champion_points", image,ally_champion_2,0.88,[(255,0,0),4])
-    image,ally_buildings2_points = search("ally_buildings_points", image,ally_building_2,0.88,[(255,0,0),4])
+    s = win32con.WS_TABSTOP | cs
 
-    buildings_points.extend(buildings2_points)
-    ally_buildings_points.extend(ally_buildings2_points)
-    ally_champion_points.extend(ally_champion2_points)
-    #cv2.imwrite('output.png',image)
-
-    all_points = {
-        "buildings_points": buildings_points,
-        #"turret_points": turret_points,
-        "minion_points": minion_points,
-        "champion_points": champion_points,
-        "ally_minion_points": ally_minion_points,
-        "ally_buildings_points": ally_buildings_points,
-        "ally_champion_points": ally_champion_points
-    }
-
-    print(f"Process time: {(time.time() - start)}"+"\n")
-    return all_points
+    return dlg
 
 
+class MakeDialog(dialog.Dialog):
+    def OnInitDialog(self):
+        self.slow = False
+        rc = dialog.Dialog.OnInitDialog(self)
+        self.pbar = win32ui.CreateProgressCtrl()
+        self.running = True
+        self.pbar.CreateWindow(
+            win32con.WS_CHILD | win32con.WS_VISIBLE, (10, 10, 310, 24), self, 1001
+        )
+        # self.pbar.SetStep (5)
+        self.progress = 0
+        self.pincr = 1
+        threading.Timer(0,self.autoincrement,()).start()
+        return rc
+    
+    def finish(self):
+        self.running = False
+        self.pbar.SetPos(100)
+        time.sleep(2)
+        self.OnCancel()
 
-class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
+    def autoincrement_slow(self):
+        for _ in range(65):
+            time.sleep(0.10)
+            self.OnOK()
+        time.sleep(1)
+        for _ in range(24):
+            time.sleep(0.4)
+            self.OnOK()
+        for _ in range(10):
+            self.OnOK()
+            time.sleep(0.8)
 
-    def do_POST(self):        
-        r, info = self.deal_post_data()
-        #print(r, info, "by: ", self.client_address)
-        f = io.BytesIO()
-        if r:
-            f.write(str.encode(info))
-        else:
-            f.write(b"Failed\n")
-        length = f.tell()
-        f.seek(0)
-        self.send_response(200)
-        self.send_header("Content-type", "text/plain")
-        self.send_header("Content-Length", str(length))
-        self.end_headers()
-        if f:
-            self.copyfile(f, self.wfile)
-            f.close()      
+    def autoincrement(self):
+        if self.slow:
+            return self.autoincrement_slow()
+        for _ in range(65):
+            time.sleep(0.05)
+            self.OnOK()
+        time.sleep(1)
+        for _ in range(24):
+            time.sleep(0.2)
+            self.OnOK()
+        for _ in range(10):
+            self.OnOK()
+            time.sleep(0.5)
 
-    def deal_post_data(self):
-        ctype, pdict = cgi.parse_header(self.headers['Content-Type'])
-        pdict['boundary'] = bytes(pdict['boundary'], "utf-8")
-        pdict['CONTENT-LENGTH'] = int(self.headers['Content-Length'])
-        if ctype == 'multipart/form-data':
-            form = cgi.FieldStorage( fp=self.rfile, headers=self.headers, environ={'REQUEST_METHOD':'POST', 'CONTENT_TYPE':self.headers['Content-Type'], })
-            try:
-                if isinstance(form["media"], list):
-                    for record in form["media"]:
-                        buf =  record.file.read()
-                        #use numpy to construct an array from the bytes
-                        x = np.fromstring(buf, dtype='uint8')
-                        #decode the array into an image
-                        img = cv2.imdecode(x, cv2.IMREAD_UNCHANGED)
-                        points = searchall(img)
-                else:
-                    buf = form["media"].file.read()
-                    #use numpy to construct an array from the bytes
-                    x = np.fromstring(buf, dtype='uint8')
-                    #decode the array into an image
-                    img = cv2.imdecode(x, cv2.IMREAD_UNCHANGED)
-                    points = searchall(img)
-                    
-            except IOError:
-                    return (False, "Can't create file to write, do you have permission to write?")
-        return (True, json.dumps(points))
+    def OnOK(self):
+        # NB: StepIt wraps at the end if you increment past the upper limit!
+        # self.pbar.StepIt()
+        if not self.running:
+            return
+        self.progress = self.progress + self.pincr
+        if self.progress > 100:
+            self.progress = 100
+        if self.progress <= 100:
+            self.pbar.SetPos(self.progress)
 
-
-
-
-
-
-def resize(src):
-    return src
-    height, width = src.shape[:2]
-    return cv2.resize(src, (0,0), fx=0.5, fy=0.5) 
-
-
-
-
-
-method = cv2.TM_SQDIFF_NORMED
-
-# Read the images from the file
-minion = resize(cv2.imread('patterns/minion.png'))
-champion_1 = resize(cv2.imread('patterns/champion.png'))
-building_1 = resize(cv2.imread('patterns/building_1.png'))
-building_2 = resize(cv2.imread('patterns/building_2.png'))
-
-ally_minion = resize(cv2.imread('patterns/ally_minion.png'))
-ally_champion_1 = resize(cv2.imread('patterns/ally_champion.png'))
-ally_champion_2 = resize(cv2.imread('patterns/ally_champion.png'))
-ally_building_1 = resize(cv2.imread('patterns/ally_building_1.png'))
-ally_building_2 = resize(cv2.imread('patterns/ally_building_2.png'))
+try:
+    instance = singleton.SingleInstance() # will sys.exit(-1) if other instance is running
+except:
+    print("Close CyborgLeague Server first before launching it again.")
+    os._exit(0)
 
 
+def confirm(msg,title,cancel=True):
+    opt = win32con.MB_YESNOCANCEL if cancel else win32con.MB_YESNO
 
+    response = win32ui.MessageBox(msg, title, opt)
+    if response == win32con.IDYES:
+        return True
+    elif response == win32con.IDNO:
+        return False
+    elif response == win32con.IDCANCEL:
+        return False
 
+def installWSL():
+    commands = "powershell Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux -NoRestart"
+    #nShow=win32con.SW_SHOWNORMAL
+    event = shell.ShellExecuteEx(fMask=shellcon.SEE_MASK_NOCLOSEPROCESS,lpVerb='runas', lpFile='powershell.exe', lpParameters=commands)
+    hprocess = event['hProcess']
+    d = MakeDialog(MakeDlgTemplate("Installing WSL2"))
+    d.slow = False
+    thread = threading.Thread(target=d.DoModal,args=())
+    thread.start()
+    win32event.WaitForSingleObject(hprocess, win32event.INFINITE) 
+    d.finish()
 
+def checkWSLDistro():
+    testing_process = subprocess.run(["wsl", "test", "-f", "/etc/os-release"])
+    if testing_process.returncode == 0:
+        return True
+    return False
 
-# Change this to serve on a different port
-PORT = 39743
+def checkSetupDistro():
+    testing_process = subprocess.run(["wsl.exe", "-u", "root", "test", "-f", "/root/.CyborgLeagueInstalled"])
+    if testing_process.returncode == 0:
+        return True
+    return False
 
-Handler = CustomHTTPRequestHandler
-socketserver.TCPServer.allow_reuse_address = True
-with socketserver.TCPServer(("", PORT), Handler) as httpd:
-    print("serving at port", PORT)
-    httpd.allow_reuse_address = True
-    try:
-        httpd.serve_forever()
-    except:
-        httpd.shutdown()
+if (not shutil.which("wsl")):
+    if (confirm("Microsoft WSL2 (Windows Subsystem for Linux v2) is not installed. \n\nDo you want to install it?","CyborgLeague")):
+        t = installWSL()
+        if (confirm("To finish, we need to restart this PC, do you want to go ahead now? This will take under 5 minutes!","CyborgLeague",cancel=False)):
+            win32api.InitiateSystemShutdown(None, "Finalizing WSL2 Installation!", 0, 1, 1)
+    exit()
 
+if not checkWSLDistro():
+    if (confirm("Almost done! The last step is installing a WSL2 Distro.\n\nDo you wish to proceed (Microsoft Store)?","CyborgLeague")):
+        subprocess.Popen('powershell.exe start ms-windows-store://pdp/?ProductId=9NBLGGH4MSV6')
+        time.sleep(1)
+    exit()
 
+if not checkSetupDistro():
+    cmd = "cd /root;sudo add-apt-repository ppa:deadsnakes/ppa -y;apt update -y;apt install git python3.6 -y;wget https://bootstrap.pypa.io/pip/3.6/get-pip.py;python3.6 get-pip.py;python3.6 get-pip.py;pip install opencv-python requests numpy flask bjoern;git clone https://github.com/bastien8060/CyborgLeague;rm get-pip.py;touch ~/.CyborgLeagueInstalled"
+    installProcess = subprocess.Popen(f'wsl.exe -u root bash -c "{cmd}" ')
 
+    d = MakeDialog(MakeDlgTemplate("Setting up CyborgLeague in WSL2"))
+    d.slow = True
+    thread = threading.Thread(target=d.DoModal,args=())
+    thread.start()
+    installProcess.communicate()
+    d.finish()
+else:
+    updateProcess = subprocess.Popen(f'wsl.exe -u root bash -c "cd /root/CyborgLeague;git pull" ')
+    d = MakeDialog(MakeDlgTemplate("Updating CyborgLeague Server"))
+    d.slow = False
+    thread = threading.Thread(target=d.DoModal,args=())
+    thread.start()
+    updateProcess.communicate()
+    d.finish()
+
+with SysTrayIcon("../src/logo.ico", "CyborgLeague Server Starting...",on_quit=lambda _:os._exit(0)) as systray:
+    systray.update(hover_text="CyborgLeague Server Running")
+
+server_process = subprocess.Popen('wsl.exe -u root bash -c "cd ~/CyborgLeague/server;python3.6 unix.py"')
+server_process.communicate()
