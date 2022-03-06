@@ -1,3 +1,4 @@
+import atexit
 import os
 import shutil
 import subprocess
@@ -177,8 +178,13 @@ else:
     updateProcess.communicate()
     d.finish()
 
-with SysTrayIcon("../src/logo.ico", "CyborgLeague Server Starting...",on_quit=lambda _:os._exit(0)) as systray:
-    systray.update(hover_text="CyborgLeague Server Running")
+def cleanup():
+    server_process.kill()
+    os._exit(0)
 
 server_process = subprocess.Popen('wsl.exe -u root bash -c "cd ~/CyborgLeague/server;python3.6 unix.py"')
+
+with SysTrayIcon("../src/logo.ico", "CyborgLeague Server Starting...",on_quit=lambda _:cleanup()) as systray:
+    systray.update(hover_text="CyborgLeague Server Running")
+
 server_process.communicate()
