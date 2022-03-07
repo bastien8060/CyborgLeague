@@ -1,12 +1,12 @@
-import atexit
+import multiprocessing
 import os
+import os.path
 import shutil
 import subprocess
 import sys
 import threading
 import time
 
-import pyuac
 import win32api
 import win32con
 import win32event
@@ -16,6 +16,7 @@ from pywin.mfc import dialog
 from tendo import singleton
 from win32com.shell import shell, shellcon
 
+
 def splashscreen_handler():
         try:
             import pyi_splash
@@ -24,6 +25,48 @@ def splashscreen_handler():
             pass
 
 splashscreen_handler()
+multiprocessing.freeze_support()
+
+
+def subprocess_args(include_stdout=True):
+    # The following is true only on Windows.
+    if hasattr(subprocess, 'STARTUPINFO'):
+        # On Windows, subprocess calls will pop up a command window by default
+        # when run from Pyinstaller with the ``--noconsole`` option. Avoid this
+        # distraction.
+        si = subprocess.STARTUPINFO()
+        si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        # Windows doesn't search the path by default. Pass it an environment so
+        # it will.
+        env = os.environ
+    else:
+        si = None
+        env = None
+
+    # ``subprocess.check_output`` doesn't allow specifying ``stdout``::
+    #
+    #   Traceback (most recent call last):
+    #     File "test_subprocess.py", line 58, in <module>
+    #       **subprocess_args(stdout=None))
+    #     File "C:\Python27\lib\subprocess.py", line 567, in check_output
+    #       raise ValueError('stdout argument not allowed, it will be overridden.')
+    #   ValueError: stdout argument not allowed, it will be overridden.
+    #
+    # So, add it only if it's needed.
+    if include_stdout:
+        ret = {'stdout': subprocess.PIPE}
+    else:
+        ret = {}
+
+    # On Windows, running this from the binary produced by Pyinstaller
+    # with the ``--noconsole`` option requires redirecting everything
+    # (stdin, stdout, stderr) to avoid an OSError exception
+    # "[Error 6] the handle is invalid."
+    ret.update({'stdin': subprocess.PIPE,
+                'stderr': subprocess.PIPE,
+                'startupinfo': si,
+                'env': env })
+    return ret
 
 
 def MakeDlgTemplate(name):
@@ -144,13 +187,13 @@ def installWSL():
     d.finish()
 
 def checkWSLDistro():
-    testing_process = subprocess.run(["wsl", "test", "-f", "/etc/os-release"])
+    testing_process = subprocess.run(["wsl", "test", "-f", "/etc/os-release"],close_fds=True,**subprocess_args(False))
     if testing_process.returncode == 0:
         return True
     return False
 
 def checkSetupDistro():
-    testing_process = subprocess.run(["wsl.exe", "-u", "root", "test", "-f", "/root/.CyborgLeagueInstalled"])
+    testing_process = subprocess.run(["wsl.exe", "-u", "root", "test", "-f", "/root/.CyborgLeagueInstalled"],close_fds=True,**subprocess_args(False))
     if testing_process.returncode == 0:
         return True
     return False
@@ -164,13 +207,13 @@ if (not shutil.which("wsl")):
 
 if not checkWSLDistro():
     if (confirm("Almost done! The last step is installing a WSL2 Distro.\n\nDo you wish to proceed (Microsoft Store)?","CyborgLeague")):
-        subprocess.Popen('powershell.exe start ms-windows-store://pdp/?ProductId=9NBLGGH4MSV6')
+        subprocess.Popen('powershell.exe start ms-windows-store://pdp/?ProductId=9NBLGGH4MSV6',close_fds=True,**subprocess_args(False))
         time.sleep(1)
     exit()
 
 if not checkSetupDistro():
     cmd = "cd /root;sudo add-apt-repository ppa:deadsnakes/ppa -y;apt update -y;apt install git python3.6 -y;wget https://bootstrap.pypa.io/pip/3.6/get-pip.py;python3.6 get-pip.py;python3.6 get-pip.py;pip install opencv-python requests numpy flask bjoern;git clone https://github.com/bastien8060/CyborgLeague;rm get-pip.py;touch ~/.CyborgLeagueInstalled"
-    installProcess = subprocess.Popen(f'wsl.exe -u root bash -c "{cmd}" ')
+    installProcess = subprocess.Popen(f'wsl.exe -u root bash -c "{cmd}" ',close_fds=True,**subprocess_args(False))
 
     d = MakeDialog(MakeDlgTemplate("Setting up CyborgLeague in WSL2"))
     d.slow = True
@@ -179,7 +222,7 @@ if not checkSetupDistro():
     installProcess.communicate()
     d.finish()
 else:
-    updateProcess = subprocess.Popen(f'wsl.exe -u root bash -c "cd /root/CyborgLeague;git pull" ')
+    updateProcess = subprocess.Popen(f'wsl.exe -u root bash -c "cd /root/CyborgLeague;git pull" ',close_fds=True,**subprocess_args(False))
     d = MakeDialog(MakeDlgTemplate("Updating CyborgLeague Server"))
     d.slow = False
     thread = threading.Thread(target=d.DoModal,args=())
@@ -198,7 +241,7 @@ def resource_path(source):
     else:
         return "../"+source
 
-server_process = subprocess.Popen('wsl.exe -u root bash -c "cd ~/CyborgLeague/server;python3.6 unix.py"')
+server_process = subprocess.Popen('wsl.exe -u root bash -c "cd ~/CyborgLeague/server;python3.6 unix.py"',close_fds=True,**subprocess_args(False))
 
 with SysTrayIcon(resource_path("src/logo.ico"), "CyborgLeague Server Starting...",on_quit=lambda _:cleanup()) as systray:
     systray.update(hover_text="CyborgLeague Server Running")
