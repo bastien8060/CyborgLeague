@@ -87,14 +87,17 @@ class SLAW:
         response = requests.get(url,verify=self.__ssl_cert, headers=authorization).content.decode()
         return json.loads(response)
 
-
-
-    def __init__(self, lpath=r"C:\Riot Games\League of Legends"):
+    def init(self, lpath):
         self.lpath = lpath
         if not os.path.isfile(fr"{self.lpath}\lockfile"):
             self.__throw_error("League of Legends Lockfile not found. Are you sure LoL is running?")
-        self.__remote_pem_url = "https://static.developer.riotgames.com/docs/lol/riotgames.pem"
         self.authorization_clear = f"riot:{self.__get_descriptor()[3]}".encode("ascii")
         self.authorization = f"Basic {base64.b64encode(self.authorization_clear).decode()}"
+
+
+    def __init__(self):
         self.__ssl_cert = tempfile.gettempdir()+"cert.pem"
+        self.__remote_pem_url = "https://static.developer.riotgames.com/docs/lol/riotgames.pem"
         self.__init_self_ssl()
+        
+        

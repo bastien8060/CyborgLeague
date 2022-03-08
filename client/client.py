@@ -1,4 +1,5 @@
 import asyncio
+import ctypes
 import multiprocessing
 import os
 import sys
@@ -6,7 +7,9 @@ from distutils.log import debug
 
 import clr
 import webview
+import win32gui
 from flask import Flask, render_template, send_from_directory
+from win32com.shell import shell, shellcon
 
 from CyborgLeague import bot
 
@@ -39,6 +42,18 @@ class GUI():
     def minimize(self):
         self.window.minimize()
         return "200"
+    
+    def browse(self):
+        desktop_pidl = shell.SHGetFolderLocation (0, shellcon.CSIDL_DESKTOP, 0, 0)
+        pidl, display_name, image_list = shell.SHBrowseForFolder (
+        win32gui.GetDesktopWindow (),
+        desktop_pidl,
+        "Select League of Legends' installation folder",
+        0,
+        None,
+        None
+        )
+        return shell.SHGetPathFromIDList (pidl).decode()
 
 
     def __init__(self,ThreadHandler):
@@ -71,10 +86,13 @@ class GUI():
             self.server = Flask(__name__, static_folder='./CyborgLeague/Web', template_folder='./CyborgLeague/Web')
 
 
+        self.server.register_error_handler(500, lambda *_:("null",500))
+
         self.server.add_url_rule('/', 'home', view_func=lambda:render_template("index.html"))
         self.server.add_url_rule('/<path:path>','server',view_func=lambda path:send_from_directory('CyborgLeague/Web', path))
         self.server.add_url_rule('/api/v1/shutdown','shutdown_api',view_func=self.shutdown)
         self.server.add_url_rule('/api/v1/minimize','minimize_api',view_func=self.minimize)
+        self.server.add_url_rule('/api/v1/browse','open_folder_api',view_func=self.browse)
 
     def splashscreen_handler(self):
         try:
@@ -97,4 +115,5 @@ def main():
 
 
 if __name__ == "__main__":
+    ctypes.windll.shcore.SetProcessDpiAwareness(ctypes.c_int(1))
     main()

@@ -7,7 +7,6 @@ import time
 import cv2
 import numpy as np
 import requests
-from skimage.transform import resize
 
 if os.name == 'nt':
     import pywintypes
@@ -64,7 +63,7 @@ class Instance:
 
         data = {"champions":json.dumps(champions)}
         files = {'media': img}
-        request = requests.post(self.backend_url, data=data, files=files)
+        request = requests.post(self.backend_url+"/api/v1/upload", data=data, files=files)
         
         print(time.time() - start_upload)
         return (time.time() - start_upload),json.loads(request.content)
@@ -107,9 +106,11 @@ class Instance:
         print(f"Ally Buildings: {len(ally_buildings)}")
 
 
-    def __init__(self, url="http://127.0.0.1:39743/api/v1/upload"):
-        self.cooldown = True
+    def init(self,url):
         self.backend_url = url
+
+    def __init__(self):
+        self.cooldown = True
         self.__sct = mss()
         self.__monitor_1 = self.__sct.monitors[0]
 

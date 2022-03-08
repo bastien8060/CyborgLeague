@@ -2,13 +2,33 @@
 <html lang="en" >
 <head>
   <meta charset="UTF-8">
-  <title>CodePen - A Pen by bastien8060</title>
+  <title>CyborgLeague</title>
   <link rel='stylesheet' href='https://raw.githubusercontent.com/doceazedo/hextech-css/master/src/buttons.css'><link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="https://raw.githubusercontent.com/doceazedo/hextech-css/master/src/buttons.css"/>
 
 </head>
 <body>
-<!-- partial:index.partial.html -->
-<link rel="stylesheet" href="https://raw.githubusercontent.com/doceazedo/hextech-css/master/src/buttons.css"/>
+<div id="settingsModal" class="modal">
+  <div class="modal_content">
+    <p class="title">Client <span class="gap">/</span> <span class="highlight">General</span><span class="right"><button onclick="getHelp()" class="button settings-help is-secondary">Help</button></span></p>
+    <br>
+    <div class="key first_key">League of Legends Path</div><input id="client_LoL_loc" placeholder="C:\Riot Games\League of Legends" class="value button is-secondary" id="LoLPath"/><button id="browse" onclick="browseFolder()" class="button is-secondary browse">Browse</button><br>
+    <div class="key">CyborgLeague Server URL</div><input id="server_api_loc" placeholder="http://127.0.0.1:39743" class="value button is-secondary" /><button class="button is-secondary browse">Default</button><br>
+    <div class="key">Champion for CyborgLeague to Choose</div><select id="selected_champ" class="value button is-secondary" >
+      <option>None</option>
+      <option>Garen</option>
+      <option>Xayah</option>
+    </select><span class="key"> - This setting won't do anything if you don't own the champion</span><br>
+    <div class="bottom_menu">
+      <center><button class="button close close-settings is-secondary">Done</button></center>
+    </div>
+  </div>
+</div>
+
+<span id="popups_area">
+
+</span>
+
 <div class="window">
   <div class="main_screen_bg">
     <div class="main_screen">
@@ -24,27 +44,25 @@
     <div class="profile_box">
       <div class="pfp">
         <img class="pfp-frame" src="https://gcdnb.pbrd.co/images/OGWGF9aueuUh.png?o=1"/>
-        <span id="level">00</span>
+        <span id="level">N/A</span>
       </div>
       <div class="profile-side">
         <img class="icon icon-close" onclick="shutdown()" src="https://gcdnb.pbrd.co/images/r00LC1XeERC9.png?o=1"/>
-        <img class="icon icon-settings" src="https://gcdnb.pbrd.co/images/0ERy2EMgnybq.png?o=1"/>
+        <img id="settingsBtn" class="icon icon-settings" src="https://gcdnb.pbrd.co/images/0ERy2EMgnybq.png?o=1"/>
         <img class="icon icon-minimize" onclick="minimize()" src="https://gcdnb.pbrd.co/images/xeqrary54EfT.png?o=1"/>
-        <img class="icon icon-help" src="https://gcdnb.pbrd.co/images/0dwKsGjxfrCE.png?o=1"/>
-        
-        
-        
+        <img class="icon icon-help" onclick="getHelp()"  src="https://gcdnb.pbrd.co/images/0dwKsGjxfrCE.png?o=1"/>
         
         
         <div class="profile_info">
-          <span id="username">Summoner</span>
+          <span id="username">Summoner (Demo)</span>
           <img class="status" src="https://gcdnb.pbrd.co/images/dkaCopkJhL2c.png?o=1"/>    
       </div>
     </div>
     
   </div>
 </div>
-<!-- partial -->
+<script src="modal.js"></script>
 <script src="script.js"></script>
+
 </body>
 </html>

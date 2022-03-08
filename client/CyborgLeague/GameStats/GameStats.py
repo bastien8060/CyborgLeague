@@ -121,8 +121,11 @@ class Instance():
     def boughtStarterPack(self):
         self.hasBoughtStarterPack = True
 
-    def __init__(self,Slaw) -> None:
+    def init(self, Slaw) -> bool:
         self.Slaw = Slaw
+        return True
+
+    def __init__(self) -> None:
         self.stats = None
         self.previous_stats = self.stats
         self.hasBoughtStarterPack = False

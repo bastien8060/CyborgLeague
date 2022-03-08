@@ -29,25 +29,35 @@ else:
 class CyborgLeagueBot:
 
     def __init__(self):
+        
         Settings.init()
-        lpath = Settings.get("client_LoL_loc")
-        url = Settings.get("server_api_loc")
-
-        self.Slaw = Slaw.SLAW(lpath=lpath)
-        self.SlawHelper = SlawHelper.Instance(self.Slaw)
-        self.Vision = VisionApi.Instance(url=url)
+        self.Slaw = Slaw.SLAW()
+        self.SlawHelper = SlawHelper.Instance()
+        self.Vision = VisionApi.Instance()
         self.VHelper = VisionHelper.Instance()
-        self.Stats = Stats.Instance(Slaw=self.Slaw)
+        self.Stats = Stats.Instance()
         self.Actions = Actions.Instance()
         self.running = False
         self.screen_elements = {}
 
         self.api_init()
 
+    def init(self):
+        Settings.init()
+        lpath = Settings.get("client_LoL_loc")
+        url = Settings.get("server_api_loc")
+
+        self.Slaw.init(lpath=lpath)
+        self.Vision.init(url=url)
+        self.SlawHelper.init(self.Slaw)
+        self.Stats.init(Slaw=self.Slaw)
+
         p = self.Slaw.get("/lol-summoner/v1/current-summoner")
         Console.log(f"Connected as: {Console.Fore.RED}{p['displayName']}{Console.Style.RESET_ALL} - {Console.Fore.CYAN}LVL{p['summonerLevel']}")
 
+
     def start(self):
+        self.init()
         self.running = True
         return "200"
 
@@ -58,11 +68,15 @@ class CyborgLeagueBot:
     def api_init(self):
         self.server = Flask(__name__)
         flask_cors.CORS(self.server)
+        self.server.register_error_handler(500, lambda *_:("error has occured",500))
         self.server.add_url_rule('/status','getstatus',view_func=lambda:"true" if self.running else "false")
         self.server.add_url_rule('/api/v1/getSummonerName','getSummonerName',view_func=self.SlawHelper.getSummonerName)
         self.server.add_url_rule('/api/v1/getSummonerLevel','getSummonerLevel',view_func=self.SlawHelper.getSummonerLevel)
         self.server.add_url_rule('/api/v1/stop','stop_bot',view_func=self.stop)
         self.server.add_url_rule('/api/v1/start','start_bot',view_func=self.start)
+        self.server.add_url_rule('/api/v1/getSetting/<key>','getSetting',view_func=Settings.get)
+        self.server.add_url_rule('/api/v1/setSetting/<key>','setSetting',view_func=Settings.set)
+        self.server.add_url_rule('/api/v1/checkSettings','setSettings',view_func=Settings.check)
         thread = Thread(target=self.api_run)
         thread.daemon = True
         thread.start()

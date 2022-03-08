@@ -40,8 +40,11 @@ def subprocess_args(include_stdout=True):
         # it will.
         env = os.environ
     else:
-        si = None
-        env = None
+        #si = None
+        #env = None
+        si = subprocess.STARTUPINFO()
+        si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        env = os.environ
 
     # ``subprocess.check_output`` doesn't allow specifying ``stdout``::
     #
@@ -212,7 +215,7 @@ if not checkWSLDistro():
     exit()
 
 if not checkSetupDistro():
-    cmd = "cd /root;sudo add-apt-repository ppa:deadsnakes/ppa -y;apt update -y;apt install git python3.6 -y;wget https://bootstrap.pypa.io/pip/3.6/get-pip.py;python3.6 get-pip.py;python3.6 get-pip.py;pip install opencv-python requests numpy flask bjoern;git clone https://github.com/bastien8060/CyborgLeague;rm get-pip.py;touch ~/.CyborgLeagueInstalled"
+    cmd = "cd /root;sudo add-apt-repository ppa:deadsnakes/ppa -y;apt update -y;apt install git python3-testresources python3.6 -y;wget https://bootstrap.pypa.io/pip/3.6/get-pip.py;python3.6 get-pip.py;python3.6 get-pip.py;pip install opencv-python requests numpy flask bjoern;git clone https://github.com/bastien8060/CyborgLeague;rm get-pip.py;touch ~/.CyborgLeagueInstalled"
     installProcess = subprocess.Popen(f'wsl.exe -u root bash -c "{cmd}" ',close_fds=True,**subprocess_args(False))
 
     d = MakeDialog(MakeDlgTemplate("Setting up CyborgLeague in WSL2"))
@@ -232,6 +235,8 @@ else:
 
 def cleanup():
     server_process.kill()
+    KillProcess = subprocess.Popen(f'wsl.exe -u root bash -c "killall python3.6" ',close_fds=True,**subprocess_args(False))
+    KillProcess.communicate()
     os._exit(0)
 
 def resource_path(source):
